@@ -29,6 +29,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val signUpLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+        if (result.resultCode == RESULT_OK && result.data != null) {
+            print("Horse");
+        } else{
+            print("Camel")
+            // Do Toast
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.viewBinding = ActivityMainBinding.inflate(layoutInflater)
@@ -38,6 +48,10 @@ class MainActivity : ComponentActivity() {
         this.viewBinding.btnLogin.setOnClickListener{
             val intent = Intent(this, LoginActivity::class.java)
             loginLauncher.launch(intent)
+        }
+        this.viewBinding.button.setOnClickListener{
+            val intent = Intent(this, SignUpActivity::class.java)
+            signUpLauncher.launch(intent)
         }
     }
 }

@@ -9,7 +9,7 @@
     android:fitsSystemWindows="true">
 
     <TextView
-        android:id="@+id/tvLogoRepLGA"
+        android:id="@+id/tvLogoRep"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
@@ -24,38 +24,38 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/tvHeadingLGA"
+        android:id="@+id/tvHeadingSPA"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="32dp"
         android:layout_marginEnd="24dp"
-        android:text="Welcome Back"
+        android:text="Get Started Now"
         android:textColor="@color/white"
         android:textSize="34sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvLogoRepLGA" />
+        app:layout_constraintTop_toBottomOf="@+id/tvLogoRep" />
 
     <TextView
-        android:id="@+id/tvSubLGA"
+        android:id="@+id/tvSubSPA"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="24dp"
-        android:text="Don't have an account? Sign Up"
+        android:text="Already have an account? Login"
         android:textColor="@color/white"
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvHeadingLGA" />
+        app:layout_constraintTop_toBottomOf="@+id/tvHeadingSPA" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/llContLGA"
+        android:id="@+id/llContSPA"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="40dp"
@@ -65,28 +65,65 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvSubLGA"
+        app:layout_constraintTop_toBottomOf="@+id/tvSubSPA"
         app:layout_constraintVertical_bias="1.0">
 
 
-        <TextView
-            android:id="@+id/tvEmailLGA"
+        <EditText
+            android:id="@+id/etFName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="48dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="40dp"
+            android:background="@drawable/et_border"
+            android:ems="10"
+            android:hint="First Name"
+            android:inputType="text"
+            android:minHeight="35sp"
+            android:padding="5sp"
+            app:layout_constraintBottom_toTopOf="@+id/tvEmailSPA"
+            app:layout_constraintEnd_toStartOf="@+id/etLName"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <EditText
+            android:id="@+id/etLName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="48dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="40dp"
+            android:background="@drawable/et_border"
+            android:ems="10"
+            android:hint="Last Name"
+            android:inputType="text"
+            android:minHeight="35sp"
+            android:padding="5sp"
+            app:layout_constraintBottom_toTopOf="@+id/tvEmailSPA"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/etFName"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvEmailSPA"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:text="Email"
             android:textColor="@color/textGrey"
             android:textSize="16sp"
-            app:layout_constraintBottom_toTopOf="@+id/etEmailLGA"
+            app:layout_constraintBottom_toTopOf="@+id/etEmailSPA"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <EditText
-            android:id="@+id/etEmailLGA"
+            android:id="@+id/etEmailSPA"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
@@ -99,10 +136,10 @@
             android:textColorHint="@color/textGrey"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvEmailLGA" />
+            app:layout_constraintTop_toBottomOf="@+id/tvEmailSPA" />
 
         <TextView
-            android:id="@+id/tvPassLGA"
+            android:id="@+id/tvPassSPA"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
@@ -113,10 +150,10 @@
             android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/etEmailLGA" />
+            app:layout_constraintTop_toBottomOf="@+id/etEmailSPA" />
 
         <EditText
-            android:id="@+id/etPassLGA"
+            android:id="@+id/etPassSPA"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
@@ -129,10 +166,10 @@
             android:textColorHint="@color/textGrey"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvPassLGA" />
+            app:layout_constraintTop_toBottomOf="@+id/tvPassSPA" />
 
         <TextView
-            android:id="@+id/tvFPLGA"
+            android:id="@+id/tvFPSPA"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
@@ -145,10 +182,10 @@
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/etPassLGA" />
+            app:layout_constraintTop_toBottomOf="@+id/etPassSPA" />
 
         <Button
-            android:id="@+id/btnSignUpLGA"
+            android:id="@+id/btnSignUpSPA"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
@@ -157,14 +194,14 @@
             android:layout_marginBottom="32dp"
             android:background="@drawable/rounded_buttons"
             android:backgroundTint="@color/primary"
-            android:text="Log In"
+            android:text="Sign Up"
             android:textColor="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvFPLGA"
-            app:layout_constraintVertical_bias="0.52" />
+            app:layout_constraintTop_toBottomOf="@+id/tvFPSPA"
+            app:layout_constraintVertical_bias="0.51" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
