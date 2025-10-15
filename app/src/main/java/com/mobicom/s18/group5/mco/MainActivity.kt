@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
             loginLauncher.launch(intent)
         }
         this.viewBinding.button.setOnClickListener{
-            val intent = Intent(this, SignUpActivity::class.java)
+            val intent = Intent(this, SpotsMapsActivity::class.java)
             signUpLauncher.launch(intent)
         }
     }
