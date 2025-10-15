@@ -60,6 +60,7 @@ dependencies {
     implementation("com.google.android.material:material:1.13.0")
     implementation(libs.play.services.maps)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.recyclerview)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

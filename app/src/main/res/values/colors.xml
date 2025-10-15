@@ -10,5 +10,6 @@
 
     <color name="textGrey">#5A5F64</color>
     <color name="primary">#243D78</color>
+    <color name="secondary">#B1C6FA</color>
     <color name="accent">#5542ED</color>
 </resources>
