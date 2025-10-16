@@ -11,10 +11,29 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Mco">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
+        <activity
+            android:name=".SpotsMapsActivity"
+            android:exported="false"
+            android:label="@string/title_activity_spots_maps"
+            android:theme="@style/Theme.Maps" />
+        <activity
+            android:name=".SignUpActivity"
+            android:exported="false"
+            android:label="@string/title_activity_sign_up"
+            android:theme="@style/Theme.Mco" />
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false"
+            android:label="@string/title_activity_login"
+            android:theme="@style/Theme.Mco" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
+
             android:theme="@style/Theme.Mco">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

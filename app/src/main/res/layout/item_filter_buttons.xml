@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/llItemFilter"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <Button
+        android:id="@+id/btnFilterItem"
+        style="@style/Theme.FilterButtons"
+        android:layout_width="90sp"
+        android:layout_height="24sp"
+        android:layout_marginStart="8sp"
+        android:layout_marginEnd="8sp"
+        android:padding="0sp"
+        android:background="@drawable/rounded_buttons"
+        android:backgroundTint="#BA5555"
+        android:text="Button"
+        android:textStyle="bold" />
+</LinearLayout>
