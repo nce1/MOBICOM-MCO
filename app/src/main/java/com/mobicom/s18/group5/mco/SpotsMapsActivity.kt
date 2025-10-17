@@ -37,9 +37,21 @@ class SpotsMapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        // Add a marker in Sydney and move the camera
-        val sydney = LatLng(-34.0, 151.0)
-        mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+        val location = LatLng(14.564376175229377, 120.99388768121005)
+        val zoomLevel = 20f
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, zoomLevel))
+        GenerateData.loadSpots(mMap)
+        mMap.uiSettings.isZoomControlsEnabled = true
+        mMap.uiSettings.isZoomGesturesEnabled = true
+        /*mMap.setOnMarkerClickListener { marker ->
+            AlertDialog.Builder(this) // 'this' is your Activity or Fragment context
+                .setTitle(marker.title)
+                .setMessage("This is a fully custom pop-up dialog! You can add buttons, images, and more here.")
+                .setPositiveButton("OK") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
+            true
+        } */
     }
 }
