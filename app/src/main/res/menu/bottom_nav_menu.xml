@@ -5,6 +5,10 @@
         android:icon="@android:drawable/ic_menu_gallery"
         android:title="Home" />
     <item
+        android:id="@+id/navigation_view_spots"
+        android:icon="@android:drawable/ic_menu_mapmode"
+        android:title="View Spots" />
+    <item
         android:id="@+id/navigation_add_microspot"
         android:icon="@android:drawable/ic_menu_add"
         android:title="Add Microspot" />

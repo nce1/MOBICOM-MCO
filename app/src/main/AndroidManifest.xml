@@ -21,6 +21,10 @@
             android:value="${MAPS_API_KEY}" />
 
         <activity
+            android:name=".AddMicrospotActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Mco" />
+        <activity
             android:name=".SpotsMapsActivity"
             android:exported="false"
             android:label="@string/title_activity_spots_maps"
