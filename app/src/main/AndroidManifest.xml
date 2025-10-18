@@ -11,6 +11,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Mco">
+        <activity
+            android:name=".SpotsActivity"
+            android:exported="false"
+            android:label="@string/title_activity_spots"
+            android:theme="@style/Theme.Mco" />
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
@@ -33,7 +39,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-
             android:theme="@style/Theme.Mco">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
