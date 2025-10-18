@@ -24,7 +24,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/tvHeadingLGA"
+        android:id="@+id/tvTitleSA"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
@@ -40,7 +40,7 @@
         app:layout_constraintTop_toBottomOf="@+id/tvLogoRepLGA" />
 
     <TextView
-        android:id="@+id/tvSubLGA"
+        android:id="@+id/tvLocSA"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
@@ -52,10 +52,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvHeadingLGA" />
+        app:layout_constraintTop_toBottomOf="@+id/tvTitleSA" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/llContLGA"
+        android:id="@+id/llContSA"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="40dp"
@@ -65,7 +65,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvSubLGA"
+        app:layout_constraintTop_toBottomOf="@+id/tvLocSA"
         app:layout_constraintVertical_bias="1.0">
 
 

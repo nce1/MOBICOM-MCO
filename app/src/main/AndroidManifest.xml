@@ -12,9 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Mco">
         <activity
-            android:name=".SpotsActivity"
+            android:name=".MicroSpotActivity"
             android:exported="false"
-            android:label="@string/title_activity_spots"
+            android:label="@string/title_activity_micro_spot"
             android:theme="@style/Theme.Mco" />
 
         <meta-data
