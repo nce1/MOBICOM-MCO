@@ -1,5 +1,6 @@
 package com.mobicom.s18.group5.mco
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -10,6 +11,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import androidx.appcompat.app.AlertDialog
 import com.mobicom.s18.group5.mco.databinding.ActivitySpotsMapsBinding
 import java.util.logging.Filter
 
@@ -38,20 +40,24 @@ class SpotsMapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap = googleMap
 
         val location = LatLng(14.564376175229377, 120.99388768121005)
-        val zoomLevel = 20f
+        val zoomLevel = 15f
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, zoomLevel))
         GenerateData.loadSpots(mMap)
         mMap.uiSettings.isZoomControlsEnabled = true
         mMap.uiSettings.isZoomGesturesEnabled = true
-        /*mMap.setOnMarkerClickListener { marker ->
-            AlertDialog.Builder(this) // 'this' is your Activity or Fragment context
+        mMap.setOnMarkerClickListener { marker ->
+            AlertDialog.Builder(this)
                 .setTitle(marker.title)
-                .setMessage("This is a fully custom pop-up dialog! You can add buttons, images, and more here.")
-                .setPositiveButton("OK") { dialog, _ ->
+                .setMessage("Welcome to the ${marker.title}!")
+                .setNeutralButton("Close") { dialog, _ -> dialog.dismiss()}
+                .setPositiveButton("View") {dialog, _ ->
+                    val intent = Intent(this, MicroSpotActivity::class.java)
+                    intent.putExtra("TITLE", marker.title)
+                    startActivity(intent)
                     dialog.dismiss()
                 }
                 .show()
             true
-        } */
+        }
     }
 }

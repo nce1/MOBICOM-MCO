@@ -20,5 +20,27 @@ class GenerateData{
             val paAgno = LatLng(14.565716708189116, 120.99277476096034)
             mMap.addMarker(MarkerOptions().position(paAgno).title("Park").snippet("Click me for more info!"))
         }
+
+        fun loadReviews(): List<String>{
+            return listOf(
+                "A truly fantastic experience.",
+                "Highly recommended for everyone.",
+                "Excellent quality and fantastic value."
+            )
+        }
+        fun loadSpotImages(): List<Int> {
+            return listOf(
+                R.drawable.pacopark,
+                //R.drawable.elnido_beach,
+                //R.drawable.binondo_church,
+                //R.drawable.home_angels,
+                //R.drawable.boracay_beach,
+                //R.drawable.dlsu_campus,
+                //R.drawable.coffee_academics,
+                R.drawable.school_blind,
+                //R.drawable.gentle_hands_inc,
+                R.drawable.pasig_river,
+                )
+        }
     }
 }
