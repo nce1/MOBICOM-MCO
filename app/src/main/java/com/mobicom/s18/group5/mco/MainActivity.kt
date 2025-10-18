@@ -19,39 +19,13 @@ import com.mobicom.s18.group5.mco.ui.theme.McoTheme
 class MainActivity : ComponentActivity() {
     private lateinit var viewBinding: ActivityMainBinding
 
-    private val loginLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-        if (result.resultCode == RESULT_OK && result.data != null) {
-            print("Horse");
-        } else{
-            print("Camel")
-            // Do Toast
-        }
-    }
 
-    private val signUpLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-        if (result.resultCode == RESULT_OK && result.data != null) {
-            print("Horse");
-        } else{
-            print("Camel")
-            // Do Toast
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(this.viewBinding.root)
 
-        // Test Login
-        this.viewBinding.btnLogin.setOnClickListener{
-            val intent = Intent(this, LoginActivity::class.java)
-            loginLauncher.launch(intent)
-        }
-        this.viewBinding.button.setOnClickListener{
-            val intent = Intent(this, SpotsMapsActivity::class.java)
-            signUpLauncher.launch(intent)
-        }
+
     }
 }
