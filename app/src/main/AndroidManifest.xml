@@ -12,6 +12,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Mco">
         <activity
+            android:name=".ProfileActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Mco" />
+        <activity
             android:name=".MicroSpotActivity"
             android:exported="false"
             android:label="@string/title_activity_micro_spot"
