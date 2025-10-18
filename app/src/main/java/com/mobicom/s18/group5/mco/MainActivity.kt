@@ -3,6 +3,7 @@ package com.mobicom.s18.group5.mco
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,6 +14,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.mobicom.s18.group5.mco.databinding.ActivityMainBinding
 import com.mobicom.s18.group5.mco.ui.theme.McoTheme
 
@@ -44,6 +47,12 @@ class MainActivity : ComponentActivity() {
         this.viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(this.viewBinding.root)
 
+        val button: Button = findViewById(R.id.programButton)
+        button.setOnClickListener {
+            val intent = Intent(this, ProgramsLayoutActivity::class.java)
+            startActivity(intent)
+        }
+
         // Test Login
         this.viewBinding.btnLogin.setOnClickListener{
             val intent = Intent(this, LoginActivity::class.java)
@@ -53,5 +62,9 @@ class MainActivity : ComponentActivity() {
             val intent = Intent(this, SpotsMapsActivity::class.java)
             signUpLauncher.launch(intent)
         }
+
+
+
+
     }
 }
