@@ -40,7 +40,7 @@ class SpotsMapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap = googleMap
 
         val location = LatLng(14.564376175229377, 120.99388768121005)
-        val zoomLevel = 20f
+        val zoomLevel = 15f
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, zoomLevel))
         GenerateData.loadSpots(mMap)
         mMap.uiSettings.isZoomControlsEnabled = true
