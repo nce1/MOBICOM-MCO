@@ -51,7 +51,7 @@ class SpotsMapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 .setMessage("Welcome to the ${marker.title}!")
                 .setNeutralButton("Close") { dialog, _ -> dialog.dismiss()}
                 .setPositiveButton("View") {dialog, _ ->
-                    val intent = Intent(this, SpotsActivity::class.java)
+                    val intent = Intent(this, MicroSpotActivity::class.java)
                     intent.putExtra("TITLE", marker.title)
                     startActivity(intent)
                     dialog.dismiss()
