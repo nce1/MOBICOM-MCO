@@ -16,7 +16,10 @@
             android:exported="false"
             android:label="@string/title_activity_micro_spot"
             android:theme="@style/Theme.Mco" />
-
+        <activity
+            android:name=".ProgramsLayoutActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Mco"/>
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
