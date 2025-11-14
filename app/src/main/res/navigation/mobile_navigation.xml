@@ -22,4 +22,9 @@
         android:name="com.mobdeve.s18.group5.bayanihanspots.ui.notifications.NotificationsFragment"
         android:label="@string/title_notifications"
         tools:layout="@layout/fragment_notifications" />
+    <fragment
+        android:id="@+id/navigation_spot"
+        android:name="com.mobdeve.s18.group5.bayanihanspots.spots.SpotFragment"
+        android:label="@string/title_notifications"
+        tools:layout="@layout/fragment_spot_list" />
 </navigation>
