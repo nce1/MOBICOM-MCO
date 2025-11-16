@@ -14,11 +14,13 @@ class LoginViewModel(private val loginRepository: LoginRepository) : ViewModel()
 
     private val _loginForm = MutableLiveData<LoginFormState>()
     val loginFormState: LiveData<LoginFormState> = _loginForm
-
     private val _loginResult = MutableLiveData<LoginResult>()
     val loginResult: LiveData<LoginResult> = _loginResult
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> = _isLoading
 
     fun login(username: String, password: String){
+        _isLoading.value = true
         viewModelScope.launch {
             val result = loginRepository.login(username, password)
 
@@ -26,20 +28,23 @@ class LoginViewModel(private val loginRepository: LoginRepository) : ViewModel()
                 _loginResult.value =
                     LoginResult(success = LoggedInUserView(result.data.displayName, result.data.username, result.data.email, result.data.imageUri))
             } else {
-                _loginResult.value = LoginResult(error = R.string.login_failed)
+                val errorMessage = (result as? Result.Error)?.exception?.message ?: "Login failed"
+                _loginResult.value = LoginResult(errorString = errorMessage)
             }
+            _isLoading.value = false
         }
     }
     fun loginWithGoogleToken(idToken: String){
+        _isLoading.value = true
         viewModelScope.launch {
             val result = loginRepository.loginWithGoogleToken(idToken)
-
             if (result is Result.Success) {
                 _loginResult.value =
                     LoginResult(success = LoggedInUserView(result.data.displayName, result.data.username, result.data.email, result.data.imageUri))
             } else {
                 _loginResult.value = LoginResult(error = R.string.login_failed)
             }
+            _isLoading.value = false
         }
     }
     fun loginDataChanged(username: String, password: String){
@@ -52,11 +57,7 @@ class LoginViewModel(private val loginRepository: LoginRepository) : ViewModel()
         }
     }
     private fun isUserNameValid(username: String): Boolean {
-        return if (username.contains("@")) {
-            Patterns.EMAIL_ADDRESS.matcher(username).matches()
-        } else {
-            username.isNotBlank()
-        }
+        return username.isNotBlank() && Patterns.EMAIL_ADDRESS.matcher(username).matches()
     }
     private fun isPasswordValid(password: String): Boolean {
         return password.length > 7
