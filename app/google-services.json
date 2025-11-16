@@ -12,7 +12,20 @@
           "package_name": "com.mobdeve.s18.group5.bayanihanspots"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "643068816365-558lsl4flivav62mahc3cbm9j4nidcc0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mobdeve.s18.group5.bayanihanspots",
+            "certificate_hash": "a675a0e65f957bdfee1c4d2e619dfeb5f95bfe6c"
+          }
+        },
+        {
+          "client_id": "643068816365-em4rv4dvfarnv23gm88883camjnlmqtn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBgnDhgiIL0Y7GxRelpNO-bh9V8aNcBmPk"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "643068816365-em4rv4dvfarnv23gm88883camjnlmqtn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
