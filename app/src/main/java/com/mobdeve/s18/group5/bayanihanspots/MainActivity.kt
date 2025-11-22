@@ -31,6 +31,8 @@ import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileViewModelFactory
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.BayanihanSpotsTheme
+import androidx.compose.ui.res.painterResource
+import com.mobdeve.s18.group5.bayanihanspots.R
 
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
@@ -117,13 +119,23 @@ fun BottomNavBar(navController: NavHostController, isLoggedIn: Boolean) {
         NavigationBarItem(
             selected = currentRoute(navController) == "home",
             onClick = { navController.navigate("home") },
-            icon = {},
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_home_black_24dp),
+                    contentDescription = "Home"
+                )
+            },
             label = { Text("Home") }
         )
         NavigationBarItem(
             selected = currentRoute(navController) == "events",
             onClick = { navController.navigate("events") },
-            icon = {},
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_dashboard_black_24dp),
+                    contentDescription = "Events"
+                )
+            },
             label = { Text("Events") }
         )
         NavigationBarItem(
@@ -135,7 +147,12 @@ fun BottomNavBar(navController: NavHostController, isLoggedIn: Boolean) {
                     navController.navigate("profile")
                 }
             },
-            icon = {},
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_profile_black_24dp),
+                    contentDescription = "Profile"
+                )
+            },
             label = { Text("Profile") }
         )
     }
