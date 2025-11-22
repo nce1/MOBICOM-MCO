@@ -22,6 +22,9 @@ import com.mobdeve.s18.group5.bayanihanspots.auth.ui.login.LoginViewModelFactory
 import com.mobdeve.s18.group5.bayanihanspots.auth.ui.signup.SignupScreen
 import com.mobdeve.s18.group5.bayanihanspots.auth.ui.signup.SignupViewModel
 import com.mobdeve.s18.group5.bayanihanspots.auth.ui.signup.SignupViewModelFactory
+import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsScreen
+import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsViewModel
+import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsViewModelFactory
 import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.DashboardScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileScreen
@@ -45,7 +48,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainApp(auth: FirebaseAuth) {
     val navController = rememberNavController()
-    Scaffold(bottomBar = { BottomNavBar(navController, auth) })
+    val isLoggedIn by rememberAuthState(auth)
+    Scaffold(bottomBar = { BottomNavBar(navController, isLoggedIn) })
     { innerPadding ->
         NavHost(
             navController = navController,
@@ -54,6 +58,16 @@ fun MainApp(auth: FirebaseAuth) {
         ) {
 
             composable("home") { HomeScreen() }
+            composable("events") {
+                val viewModel: EventsViewModel = viewModel(factory = EventsViewModelFactory())
+                val state by viewModel.uiState.collectAsState()
+                EventsScreen(
+                    state = state,
+                    onRefresh = { viewModel.refresh() },
+                    isLoggedIn = isLoggedIn,
+                    onLoginClick = { navController.navigate("login") }
+                )
+            }
             composable("dashboard") { DashboardScreen() }
             // Add notifications
             composable("profile") {
@@ -98,7 +112,7 @@ fun MainApp(auth: FirebaseAuth) {
     }
 }
 @Composable
-fun BottomNavBar(navController: NavHostController, auth: FirebaseAuth) {
+fun BottomNavBar(navController: NavHostController, isLoggedIn: Boolean) {
     NavigationBar {
         NavigationBarItem(
             selected = currentRoute(navController) == "home",
@@ -107,15 +121,15 @@ fun BottomNavBar(navController: NavHostController, auth: FirebaseAuth) {
             label = { Text("Home") }
         )
         NavigationBarItem(
-            selected = currentRoute(navController) == "dashboard",
-            onClick = { navController.navigate("dashboard") },
+            selected = currentRoute(navController) == "events",
+            onClick = { navController.navigate("events") },
             icon = {},
-            label = { Text("Dashboard") }
+            label = { Text("Events") }
         )
         NavigationBarItem(
             selected = currentRoute(navController) == "profile",
             onClick = {
-                if (auth.currentUser == null) {
+                if (!isLoggedIn) {
                     navController.navigate("login")
                 } else {
                     navController.navigate("profile")
@@ -131,4 +145,17 @@ fun BottomNavBar(navController: NavHostController, auth: FirebaseAuth) {
 fun currentRoute(navController: NavHostController): String? {
     val backStackEntry by navController.currentBackStackEntryAsState()
     return backStackEntry?.destination?.route
+}
+
+@Composable
+private fun rememberAuthState(auth: FirebaseAuth): State<Boolean> {
+    val loggedIn = remember { mutableStateOf(auth.currentUser != null) }
+    DisposableEffect(auth) {
+        val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            loggedIn.value = firebaseAuth.currentUser != null
+        }
+        auth.addAuthStateListener(listener)
+        onDispose { auth.removeAuthStateListener(listener) }
+    }
+    return loggedIn
 }
