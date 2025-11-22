@@ -27,6 +27,7 @@ import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileViewModelFactory
+import com.mobdeve.s18.group5.bayanihanspots.ui.theme.BayanihanSpotsTheme
 
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
@@ -34,7 +35,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         auth = Firebase.auth
         setContent {
-            MainApp(auth)
+            BayanihanSpotsTheme {
+                MainApp(auth)
+            }
         }
     }
 }
