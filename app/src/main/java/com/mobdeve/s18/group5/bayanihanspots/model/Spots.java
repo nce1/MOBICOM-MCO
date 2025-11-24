@@ -10,6 +10,7 @@ public class Spots {
     private String type;
     private String status;
     private GeoPoint coordinates;
+    private String crowdLevel;
 
     public Spots() {
 
@@ -59,6 +60,11 @@ public class Spots {
     public void setCoordinates(GeoPoint coordinates) {
         this.coordinates = coordinates;
     }
-
+    public String getCrowdLevel() {
+        return crowdLevel;
+    }
+    public void setCrowdLevel(String crowdLevel) {
+        this.crowdLevel = crowdLevel;
+    }
 }
 

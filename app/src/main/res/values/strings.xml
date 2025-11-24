@@ -5,18 +5,19 @@
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>
     <string name="action_sign_in">Sign in or register</string>
     <string name="action_sign_in_short">Sign in</string>
     <string name="welcome">"Welcome! "</string>
-    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_username">Username must be at least 5 characters</string>
+    <string name="invalid_email">Please enter a valid email</string>
+    <string name="invalid_first">Please enter your first name</string>
+    <string name="invalid_last">Please enter your last name</string>
     <string name="invalid_field">Invalid</string>
     <string name="invalid_password">Password must be at least 8 characters</string>
-    <string name="mismatch_password">Password must match</string>
+    <string name="mismatch_password">Passwords must match</string>
     <string name="login_failed">"Login failed"</string>
     <string name="signup_failed">"Registration failed"</string>
-    <string name="title_activity_main2">MainActivity2</string>
 </resources>

@@ -14,10 +14,12 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -29,6 +31,7 @@ import com.mobdeve.s18.group5.bayanihanspots.R
 
 @Composable
 fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpSuccess: () -> Unit) {
+    val formState by viewModel.signUpFormState.observeAsState()
     val isLoading by viewModel.isLoading.observeAsState(false)
     val signUpResult by viewModel.signUpResult.observeAsState()
 
@@ -38,6 +41,12 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var firstnameHadFocus by remember { mutableStateOf(false) }
+    var lastnameHadFocus by remember { mutableStateOf(false) }
+    var emailHadFocus by remember { mutableStateOf(false) }
+    var usernameHadFocus by remember { mutableStateOf(false) }
+    var passwordHadFocus by remember { mutableStateOf(false) }
+    var confirmPasswordHadFocus by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -52,7 +61,7 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
     }
     Box(modifier = Modifier.fillMaxSize()){
         Image(
-            painter = painterResource(id = R.drawable.ic_launcher_background),
+            painter = painterResource(id = R.drawable.bg_auth),
             contentDescription = "Auth Background",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
@@ -111,34 +120,88 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        OutlinedTextField(
-                            value = firstname,
-                            onValueChange = { firstname = it },
-                            label = { Text("First Name") },
-                            modifier = Modifier.weight(1f)
-                        )
-                        OutlinedTextField(
-                            value = lastname,
-                            onValueChange = { lastname = it },
-                            label = { Text("Last Name") },
-                            modifier = Modifier.weight(1f)
-                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            OutlinedTextField(
+                                value = firstname,
+                                onValueChange = { firstname = it },
+                                label = { Text("First Name") },
+                                modifier = Modifier
+                                .fillMaxWidth()
+                                .onFocusChanged { focusState ->
+                                    if (focusState.isFocused) {
+                                        firstnameHadFocus = true
+                                    } else if (firstnameHadFocus) {
+                                        viewModel.firstnameFocusLost(firstname)
+                                        viewModel.signUpDataChanged(email, firstname, lastname, username, password, confirmPassword)
+                                    }
+                                }
+                            )
+                            if (formState?.firstnameTouched == true){
+                                formState?.firstnameError?.let{ Text(text = stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 4.dp, top = 2.dp)) }
+                            }
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            OutlinedTextField(
+                                value = lastname,
+                                onValueChange = { lastname = it },
+                                label = { Text("Last Name") },
+                                modifier = Modifier
+                                .fillMaxWidth()
+                                .onFocusChanged { focusState ->
+                                    if (focusState.isFocused) {
+                                        lastnameHadFocus = true
+                                    } else if (lastnameHadFocus) {
+                                        viewModel.lastnameFocusLost(lastname)
+                                        viewModel.signUpDataChanged(email, firstname, lastname, username, password, confirmPassword)
+                                    }
+                                }
+                            )
+                            if (formState?.lastnameTouched == true) {
+                                formState?.lastnameError?.let { Text(text = stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 4.dp, top = 2.dp)) }
+                            }
+                        }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
                         label = { Text("Email") },
+                        isError = formState?.emailTouched == true && formState?.emailError != null,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    emailHadFocus = true
+                                } else if (emailHadFocus) {
+                                    viewModel.emailFocusLost(email)
+                                    viewModel.signUpDataChanged(email, firstname, lastname, username, password, confirmPassword)
+                                }
+                            }
                     )
+                    if (formState?.emailTouched == true){
+                        formState?.emailError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = username,
                         onValueChange = { username = it },
                         label = { Text("Username") },
-                        modifier = Modifier.fillMaxWidth()
+                        isError = formState?.usernameTouched == true && formState?.usernameError != null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    usernameHadFocus = true
+                                } else if (usernameHadFocus) {
+                                    viewModel.usernameFocusLost(username)
+                                    viewModel.signUpDataChanged(email, firstname, lastname, username, password, confirmPassword)
+                                }
+                            }
                     )
+                    if (formState?.usernameTouched == true){
+                        formState?.usernameError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = password,
@@ -146,8 +209,21 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                         label = { Text("Password") },
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        modifier = Modifier.fillMaxWidth()
+                        isError = formState?.passwordTouched == true && formState?.passwordError != null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    passwordHadFocus = true
+                                } else if (passwordHadFocus) {
+                                    viewModel.passwordFocusLost(password)
+                                    viewModel.signUpDataChanged(email, firstname, lastname, username, password, confirmPassword)
+                                }
+                            }
                     )
+                    if (formState?.passwordTouched == true){
+                        formState?.passwordError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = confirmPassword,
@@ -155,8 +231,21 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                         label = { Text("Confirm Password") },
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        modifier = Modifier.fillMaxWidth()
+                        isError = formState?.cPasswordTouched == true && formState?.confirmPasswordError != null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    confirmPasswordHadFocus = true
+                                } else if (confirmPasswordHadFocus) {
+                                    viewModel.cPasswordFocusLost(password, confirmPassword)
+                                    viewModel.signUpDataChanged(email, firstname, lastname, username, password, confirmPassword)
+                                }
+                            }
                     )
+                    if (formState?.cPasswordTouched == true){
+                        formState?.confirmPasswordError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
+                    }
                     Spacer(modifier = Modifier.height(32.dp))
                     Button(
                         onClick = {
@@ -164,12 +253,13 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                                 email, password, firstname, lastname, username
                             )
                         },
+                        enabled = formState?.isDataValid == true && !isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Sign Up", fontSize = 16.sp)
+                        Text("Sign up", fontSize = 16.sp)
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(

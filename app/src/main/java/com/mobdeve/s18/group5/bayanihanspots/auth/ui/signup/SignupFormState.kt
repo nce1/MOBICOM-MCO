@@ -7,5 +7,12 @@ data class SignUpFormState(
     val firstnameError: Int? = null,
     val lastnameError: Int? = null,
     val usernameError: Int? = null,
-    val isDataValid: Boolean = false
+    val isDataValid: Boolean = false,
+
+    val firstnameTouched: Boolean = false,
+    val lastnameTouched: Boolean = false,
+    val emailTouched: Boolean = false,
+    val passwordTouched: Boolean = false,
+    val cPasswordTouched: Boolean = false,
+    val usernameTouched: Boolean = false
 )
