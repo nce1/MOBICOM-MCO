@@ -25,7 +25,6 @@ import com.mobdeve.s18.group5.bayanihanspots.auth.ui.signup.SignupViewModelFacto
 import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsViewModelFactory
-import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.DashboardScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileViewModel
@@ -70,7 +69,6 @@ fun MainApp(auth: FirebaseAuth) {
                     onLoginClick = { navController.navigate("login") }
                 )
             }
-            composable("dashboard") { DashboardScreen() }
             // Add notifications
             composable("profile") {
                 val context = LocalContext.current

@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -35,6 +36,8 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit, onSignupC
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var emailHadFocus by remember { mutableStateOf(false) }
+    var passwordHadFocus by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -47,13 +50,9 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit, onSignupC
         result.errorString?.let{ Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
     }
 
-    LaunchedEffect(email, password) {
-        viewModel.loginDataChanged(email, password)
-    }
-
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
-            painter = painterResource(id = R.drawable.ic_launcher_background),
+            painter = painterResource(id = R.drawable.bg_auth),
             contentDescription = "Auth Background",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
@@ -109,28 +108,48 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit, onSignupC
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 16.dp, vertical = 32.dp)
                 ) {
-
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
                         label = { Text("Email") },
-                        isError = formState?.usernameError != null,
+                        isError = formState?.usernameTouched == true && formState?.usernameError != null,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused){
+                                    emailHadFocus = true
+                                } else if (emailHadFocus){
+                                    viewModel.usernameFocusLost(email)
+                                    viewModel.loginDataChanged(email, password)
+                                }
+                            }
                     )
-                    formState?.usernameError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    if (formState?.usernameTouched == true){
+                        formState?.usernameError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
+                    }
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
                         label = { Text("Password") },
-                        isError = formState?.passwordError != null,
+                        isError = formState?.passwordTouched == true && formState?.passwordError != null,
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    passwordHadFocus = true
+                                } else if (passwordHadFocus) {
+                                    viewModel.passwordFocusLost(password)
+                                    viewModel.loginDataChanged(email, password)
+                                }
+                            }
                     )
-                    formState?.passwordError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
+                    if (formState?.passwordTouched == true){
+                        formState?.passwordError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Forgot Password?",

@@ -13,7 +13,20 @@ import com.mobdeve.s18.group5.bayanihanspots.auth.ui.login.LoginResult
 import kotlinx.coroutines.launch
 
 class SignupViewModel(private val loginRepository: LoginRepository) : ViewModel() {
-    private val _signUpForm = MutableLiveData<SignUpFormState>()
+    private val _signUpForm = MutableLiveData(SignUpFormState(
+        emailError = null,
+        passwordError = null,
+        confirmPasswordError = null,
+        firstnameError = null,
+        lastnameError = null,
+        isDataValid = false,
+        firstnameTouched = false,
+        lastnameTouched = false,
+        emailTouched = false,
+        usernameTouched = false,
+        passwordTouched = false,
+        cPasswordTouched = false
+    ))
     val signUpFormState: LiveData<SignUpFormState> = _signUpForm
     private val _signUpResult = MutableLiveData<LoginResult>()
     val signUpResult: LiveData<LoginResult> = _signUpResult
@@ -33,23 +46,6 @@ class SignupViewModel(private val loginRepository: LoginRepository) : ViewModel(
             _isLoading.value = false
         }
     }
-    fun signUpDataChanged(email: String, firstname: String, lastname: String, username: String, password: String, confirmPass: String){
-        if (!isEmailValid(email)){
-            _signUpForm.value = SignUpFormState(emailError = R.string.invalid_field)
-        } else if (!isFirstnameValid(firstname)){
-            _signUpForm.value = SignUpFormState(firstnameError = R.string.invalid_field)
-        } else if (!isLastnameValid(lastname)){
-            _signUpForm.value = SignUpFormState(lastnameError = R.string.invalid_field)
-        } else if (!isUsernameValid(username)){
-            _signUpForm.value = SignUpFormState(usernameError = R.string.invalid_field)
-        } else if (!isPasswordValid(password)){
-            _signUpForm.value = SignUpFormState(passwordError = R.string.invalid_password)
-        } else if (!isConfirmPasswordValid(password, confirmPass)){
-            _signUpForm.value = SignUpFormState(confirmPasswordError = R.string.mismatch_password)
-        } else{
-            _signUpForm.value = SignUpFormState(isDataValid = true)
-        }
-    }
     fun loginWithGoogleToken(idToken: String){
         _isLoading.value = true
         viewModelScope.launch{
@@ -63,6 +59,46 @@ class SignupViewModel(private val loginRepository: LoginRepository) : ViewModel(
             }
             _isLoading.value = false
         }
+    }
+    fun signUpDataChanged(email: String, firstname: String, lastname: String, username: String, password: String, confirmPass: String){
+        val form = _signUpForm.value ?: return
+        val isEmailValid = isEmailValid(email)
+        val isUsernameValid = isUsernameValid(username)
+        val isPasswordValid = isPasswordValid(password)
+        val isCPasswordValid = isConfirmPasswordValid(password, confirmPass)
+        val isFirstValid = isFirstnameValid(firstname)
+        val isLastValid = isLastnameValid(lastname)
+        _signUpForm.value = form.copy(isDataValid = isEmailValid && isUsernameValid && isPasswordValid && isCPasswordValid && isFirstValid && isLastValid)
+    }
+    fun emailFocusLost(email: String){
+        val form = _signUpForm.value ?: return
+        val isValid = isEmailValid(email)
+        _signUpForm.value = form.copy(emailTouched = true, emailError = if (isValid) null else R.string.invalid_email)
+    }
+    fun usernameFocusLost(username: String){
+        val form = _signUpForm.value ?: return
+        val isValid = isUsernameValid(username)
+        _signUpForm.value = form.copy(usernameTouched = true, usernameError = if (isValid) null else R.string.invalid_username)
+    }
+    fun passwordFocusLost(password: String){
+        val form = _signUpForm.value ?: return
+        val isValid = isPasswordValid(password)
+        _signUpForm.value = form.copy(passwordTouched = true, passwordError = if (isValid) null else R.string.invalid_password)
+    }
+    fun cPasswordFocusLost(password: String, cPassword: String){
+        val form = _signUpForm.value ?: return
+        val isValid = isConfirmPasswordValid(password, cPassword)
+        _signUpForm.value = form.copy(cPasswordTouched = true, confirmPasswordError = if (isValid) null else R.string.mismatch_password)
+    }
+    fun firstnameFocusLost(firstname: String){
+        val form = _signUpForm.value ?: return
+        val isValid = isFirstnameValid(firstname)
+        _signUpForm.value = form.copy(firstnameTouched = true, firstnameError = if (isValid) null else R.string.invalid_first)
+    }
+    fun lastnameFocusLost(lastname: String){
+        val form = _signUpForm.value ?: return
+        val isValid = isLastnameValid(lastname)
+        _signUpForm.value = form.copy(lastnameTouched = true, lastnameError = if (isValid) null else R.string.invalid_last)
     }
     private fun isEmailValid(email: String): Boolean {
         return email.isNotBlank() && Patterns.EMAIL_ADDRESS.matcher(email).matches()
