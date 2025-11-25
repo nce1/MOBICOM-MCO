@@ -1,5 +1,4 @@
-package com.mobdeve.s18.group5.bayanihanspots.model
-
+package com.mobdeve.s18.group5.bayanihanspots.data.user
 
 class User (var id: Int, var email: String, var firstName: String, var lastName: String) {
     companion object {

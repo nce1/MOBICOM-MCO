@@ -69,7 +69,6 @@ fun MainApp(auth: FirebaseAuth) {
                     onLoginClick = { navController.navigate("login") }
                 )
             }
-            // Add notifications
             composable("profile") {
                 val context = LocalContext.current
                 val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(context.applicationContext))
