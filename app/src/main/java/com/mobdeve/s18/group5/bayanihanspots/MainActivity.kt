@@ -57,8 +57,14 @@ fun MainApp(auth: FirebaseAuth) {
             startDestination = "home",
             modifier = Modifier.padding(innerPadding)
         ) {
-
-            composable("home") { HomeScreen() }
+            composable("home") {
+                HomeScreen(
+                    isLoggedIn = isLoggedIn,
+                    onNavigateToDetails = { spotId ->
+                        println("hello")
+                    }
+                )
+            }
             composable("events") {
                 val viewModel: EventsViewModel = viewModel(factory = EventsViewModelFactory())
                 val state by viewModel.uiState.collectAsState()

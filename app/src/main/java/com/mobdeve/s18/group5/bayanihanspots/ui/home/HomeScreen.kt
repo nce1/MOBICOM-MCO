@@ -3,7 +3,7 @@ package com.mobdeve.s18.group5.bayanihanspots.ui.home
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
-import android.location.Location
+import androidx.compose.ui.window.Dialog
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.location.LocationServices
 import com.mobdeve.s18.group5.bayanihanspots.data.spots.Spot
+import com.mobdeve.s18.group5.bayanihanspots.spots.SpotDetailsDialog
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.PrimaryTeal
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.SecondarySage
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.SurfaceOffWhite
@@ -27,10 +28,11 @@ import com.mobdeve.s18.group5.bayanihanspots.ui.theme.TextCharcoal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory())){
+fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory()), onNavigateToDetails: (String) -> Unit, isLoggedIn: Boolean){
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var selectedCategory by remember { mutableStateOf("All") }
+    var selectedSpot by remember { mutableStateOf<Spot?>(null) }
 
     val fusedLocationClient = remember {
         LocationServices.getFusedLocationProviderClient(context)
@@ -167,17 +169,35 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModelFacto
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ){
                         items(displayedSpots){ spot ->
-                            SpotCard(spot = spot)
+                            SpotCard(spot = spot,
+                                onClick = {
+                                    selectedSpot = spot
+                                })
                         }
+                    }
+                    if (selectedSpot != null) {
+                        SpotDetailsDialog(
+                            spot = selectedSpot!!,
+                            onDismiss = { selectedSpot = null },
+                            onExpand = {
+                                selectedSpot?.let { spot ->
+                                    selectedSpot = null
+                                    onNavigateToDetails(spot.id)
+                                }
+                            }
+                        )
                     }
                 }
             }
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SpotCard(spot: Spot){
+fun SpotCard(spot: Spot, onClick: () -> Unit){
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = SurfaceOffWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
