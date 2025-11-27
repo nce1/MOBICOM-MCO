@@ -1,6 +1,7 @@
 package com.mobdeve.s18.group5.bayanihanspots
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
@@ -31,17 +32,29 @@ import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileViewModelFactory
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.BayanihanSpotsTheme
 import androidx.compose.ui.res.painterResource
-import com.mobdeve.s18.group5.bayanihanspots.R
+import com.google.android.gms.maps.MapsInitializer
+import com.google.android.gms.maps.OnMapsSdkInitializedCallback
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), OnMapsSdkInitializedCallback {
     private lateinit var auth: FirebaseAuth
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         auth = Firebase.auth
+        try {
+            MapsInitializer.initialize(applicationContext, MapsInitializer.Renderer.LEGACY, this)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         setContent {
             BayanihanSpotsTheme {
                 MainApp(auth)
             }
+        }
+    }
+    override fun onMapsSdkInitialized(renderer: MapsInitializer.Renderer) {
+        when (renderer) {
+            MapsInitializer.Renderer.LATEST -> Log.d("MapsSetup", "Latest Renderer loaded")
+            MapsInitializer.Renderer.LEGACY -> Log.d("MapsSetup", "Legacy Renderer loaded (Emulator Safe)")
         }
     }
 }

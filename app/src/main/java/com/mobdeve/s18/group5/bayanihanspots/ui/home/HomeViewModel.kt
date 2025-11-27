@@ -1,13 +1,14 @@
 package com.mobdeve.s18.group5.bayanihanspots.ui.home
 
 import android.location.Location
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.mobdeve.s18.group5.bayanihanspots.data.events.EventsRepository
 import com.mobdeve.s18.group5.bayanihanspots.data.spots.Spot
 import com.mobdeve.s18.group5.bayanihanspots.data.spots.SpotsRepository
-import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +23,7 @@ sealed interface SpotsUiState {
 class HomeViewModel(private val repository: SpotsRepository): ViewModel(){
     private val _uiState = MutableStateFlow<SpotsUiState>(SpotsUiState.Loading)
     private var rawSpots: List<Spot> = emptyList()
+    var userLocation by mutableStateOf<Location?>(null)
     val uiState: StateFlow<SpotsUiState> = _uiState.asStateFlow()
     init{
         observeSpots()
@@ -51,6 +53,7 @@ class HomeViewModel(private val repository: SpotsRepository): ViewModel(){
     }
 
     fun updateUserLocation(location: Location) {
+        userLocation = location
         val updatedSpots = repository.updateDistances(rawSpots, location)
         _uiState.value = SpotsUiState.Success(updatedSpots)
     }

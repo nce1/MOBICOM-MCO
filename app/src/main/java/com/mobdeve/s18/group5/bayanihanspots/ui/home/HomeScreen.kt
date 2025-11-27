@@ -3,7 +3,6 @@ package com.mobdeve.s18.group5.bayanihanspots.ui.home
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
-import androidx.compose.ui.window.Dialog
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -140,19 +139,13 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModelFacto
                             .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.Center
                     ){
-                        Surface(
-                            shape = MaterialTheme.shapes.medium,
-                            color = SecondarySage
-                        ){
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ){
-                                Text("Map preview placeholder", color = TextCharcoal)
+                        HomeMap(
+                            spots = displayedSpots,
+                            userLocation = viewModel.userLocation,
+                            onMarkerClick = { clickedSpot ->
+                                selectedSpot = clickedSpot
                             }
-                        }
+                        )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
