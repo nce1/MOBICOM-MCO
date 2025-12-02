@@ -37,6 +37,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.OnMapsSdkInitializedCallback
+import com.mobdeve.s18.group5.bayanihanspots.moderator.ModeratorApp
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModelFactory
 
@@ -53,9 +54,24 @@ class MainActivity : ComponentActivity(), OnMapsSdkInitializedCallback {
         }
         setContent {
             BayanihanSpotsTheme {
-                MainApp(auth)
+                var currentUser by remember { mutableStateOf(auth.currentUser) }
+                DisposableEffect(auth) {
+                    val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+                        currentUser = firebaseAuth.currentUser
+                    }
+                    auth.addAuthStateListener(listener)
+                    onDispose {
+                        auth.removeAuthStateListener(listener)
+                    }
+                }
+                if (currentUser != null && currentUser?.email == "moderator.bayanihanspots@gmail.com") {
+                    ModeratorApp(onLogout = {
+                        auth.signOut()
+                    })
+                } else {
+                    MainApp(auth)
+                }
             }
-
         }
     }
     override fun onMapsSdkInitialized(renderer: MapsInitializer.Renderer) {
@@ -64,7 +80,12 @@ class MainActivity : ComponentActivity(), OnMapsSdkInitializedCallback {
             MapsInitializer.Renderer.LEGACY -> Log.d("MapsSetup", "Legacy Renderer loaded (Emulator Safe)")
         }
     }
+    private fun isUserAdmin(): Boolean {
+        val user = FirebaseAuth.getInstance().currentUser
+        return user?.email == "moderator.bayanihanspots@gmail.com"
+    }
 }
+
 @Composable
 fun MainApp(auth: FirebaseAuth) {
     val sharedViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory())
@@ -135,11 +156,16 @@ fun MainApp(auth: FirebaseAuth) {
             composable("login") {
                 val context = LocalContext.current
                 val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(context.applicationContext))
-                LoginScreen(viewModel = viewModel,
+
+                LoginScreen(
+                    viewModel = viewModel,
                     onLoginSuccess = {
-                        navController.navigate("profile") {
-                            popUpTo("signup") { inclusive = true }
-                            launchSingleTop = true
+                        if (auth.currentUser?.email == "moderator.bayanihanspots@gmail.com") {
+                        } else {
+                            navController.navigate("profile") {
+                                popUpTo("signup") { inclusive = true }
+                                launchSingleTop = true
+                            }
                         }
                     },
                     onSignupClick = { navController.navigate("signup") }

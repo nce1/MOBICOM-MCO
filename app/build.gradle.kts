@@ -76,6 +76,7 @@ dependencies {
     implementation(libs.play.services.maps)
     implementation(libs.androidx.animation.core)
     implementation(libs.volley)
+    implementation(libs.material3)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

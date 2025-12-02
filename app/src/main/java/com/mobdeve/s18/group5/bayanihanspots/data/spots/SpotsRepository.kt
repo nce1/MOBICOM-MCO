@@ -12,6 +12,7 @@ import kotlinx.coroutines.tasks.await
 class SpotsRepository(private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()){
     fun observeSpots(): Flow<Result<List<Spot>>> = callbackFlow{
         val registration = firestore.collection(SPOTS_COLLECTION)
+            .whereEqualTo("approvalStatus", "APPROVED")
             .addSnapshotListener { snapshot, error ->
                 if (error != null){
                     trySend(Result.failure(error)).isSuccess
@@ -30,29 +31,6 @@ class SpotsRepository(private val firestore: FirebaseFirestore = FirebaseFiresto
         Result.success(Unit)
     } catch (e: Exception){
         Result.failure(e)
-    }
-
-    private fun DocumentSnapshot.toSpot(): Spot?{
-        val name = getString("name") ?: return null
-        val type = getString("type") ?: return null
-        val status = getString("status") ?: return null
-        val crowdLevel = getString("crowdLevel") ?: return null
-        val description = getString("description") ?: return null
-        val coordinates = getGeoPoint("coordinates") ?: return null
-        val userID = getString("userID") ?: return null
-        @Suppress("UNCHECKED_CAST")
-        val imageList = get("imageList") as? List<String> ?: emptyList()
-        return Spot(
-            id =id,
-            name = name,
-            type = type,
-            status = status,
-            crowdLevel = crowdLevel,
-            description = description,
-            coordinates = coordinates,
-            userID = userID,
-            imageList = imageList
-        )
     }
 
     fun updateDistances(spots: List<Spot>, userLocation: Location?): List<Spot> {

@@ -48,7 +48,6 @@ fun SpotScreen(
 
     var reviews by remember { mutableStateOf<List<Review>>(emptyList()) }
 
-    // New Review State
     var userRating by remember { mutableStateOf(0) }
     var userComment by remember { mutableStateOf("") }
     var isSubmitting by remember { mutableStateOf(false) }
