@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mobdeve.s18.group5.bayanihanspots.spots.SpotScreen
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
@@ -32,11 +33,16 @@ import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileViewModelFactory
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.BayanihanSpotsTheme
 import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.OnMapsSdkInitializedCallback
+import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModel
+import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModelFactory
 
 class MainActivity : ComponentActivity(), OnMapsSdkInitializedCallback {
     private lateinit var auth: FirebaseAuth
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         auth = Firebase.auth
@@ -49,6 +55,7 @@ class MainActivity : ComponentActivity(), OnMapsSdkInitializedCallback {
             BayanihanSpotsTheme {
                 MainApp(auth)
             }
+
         }
     }
     override fun onMapsSdkInitialized(renderer: MapsInitializer.Renderer) {
@@ -58,9 +65,9 @@ class MainActivity : ComponentActivity(), OnMapsSdkInitializedCallback {
         }
     }
 }
-
 @Composable
 fun MainApp(auth: FirebaseAuth) {
+    val sharedViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory())
     val navController = rememberNavController()
     val isLoggedIn by rememberAuthState(auth)
     Scaffold(bottomBar = { BottomNavBar(navController, isLoggedIn) })
@@ -73,10 +80,22 @@ fun MainApp(auth: FirebaseAuth) {
             composable("home") {
                 HomeScreen(
                     isLoggedIn = isLoggedIn,
-                    onNavigateToDetails = { spotId ->
-                        println("hello")
+                    onNavigateToDetails = { spot ->
+                        navController.navigate("details/${spot.id}")
                     }
                 )
+            }
+            composable("details/{spotId}",
+                arguments = listOf(navArgument("spotId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val spotId = backStackEntry.arguments?.getString("spotId") ?: ""
+                val spotFromMemory = sharedViewModel.getSpotById(spotId)
+                if (spotFromMemory != null) {
+                    SpotScreen(
+                        spot = spotFromMemory,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
             composable("events") {
                 val viewModel: EventsViewModel = viewModel(factory = EventsViewModelFactory())

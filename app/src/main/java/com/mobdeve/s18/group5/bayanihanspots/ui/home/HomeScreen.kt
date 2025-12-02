@@ -27,12 +27,11 @@ import com.mobdeve.s18.group5.bayanihanspots.ui.theme.TextCharcoal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory()), onNavigateToDetails: (String) -> Unit, isLoggedIn: Boolean){
+fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory()), onNavigateToDetails: (Spot) -> Unit, isLoggedIn: Boolean){
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var selectedCategory by remember { mutableStateOf("All") }
     var selectedSpot by remember { mutableStateOf<Spot?>(null) }
-
     val fusedLocationClient = remember {
         LocationServices.getFusedLocationProviderClient(context)
     }
@@ -173,10 +172,9 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModelFacto
                             spot = selectedSpot!!,
                             onDismiss = { selectedSpot = null },
                             onExpand = {
-                                selectedSpot?.let { spot ->
-                                    selectedSpot = null
-                                    onNavigateToDetails(spot.id)
-                                }
+                                val spotToPass = selectedSpot!!
+                                selectedSpot = null
+                                onNavigateToDetails(spotToPass)
                             }
                         )
                     }

@@ -11,7 +11,9 @@ data class Spot(
     val crowdLevel: String,
     val description: String,
     val coordinates: GeoPoint? = null,
+    val userID: String,
 
+    val imageList: List<String> = emptyList(),
     @get:Exclude
     var distanceString: String = ""
 )

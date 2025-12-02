@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.androidx.runtime)
     implementation(libs.play.services.maps)
     implementation(libs.androidx.animation.core)
+    implementation(libs.volley)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -99,4 +100,8 @@ dependencies {
     // Maps
     implementation("com.google.maps.android:maps-compose:4.3.3")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
+
+    // Coil
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
 }
