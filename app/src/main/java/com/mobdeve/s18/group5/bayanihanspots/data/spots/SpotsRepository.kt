@@ -39,7 +39,9 @@ class SpotsRepository(private val firestore: FirebaseFirestore = FirebaseFiresto
         val crowdLevel = getString("crowdLevel") ?: return null
         val description = getString("description") ?: return null
         val coordinates = getGeoPoint("coordinates") ?: return null
-
+        val userID = getString("userID") ?: return null
+        @Suppress("UNCHECKED_CAST")
+        val imageList = get("imageList") as? List<String> ?: emptyList()
         return Spot(
             id =id,
             name = name,
@@ -47,7 +49,9 @@ class SpotsRepository(private val firestore: FirebaseFirestore = FirebaseFiresto
             status = status,
             crowdLevel = crowdLevel,
             description = description,
-            coordinates = coordinates
+            coordinates = coordinates,
+            userID = userID,
+            imageList = imageList
         )
     }
 

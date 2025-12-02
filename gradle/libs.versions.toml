@@ -32,6 +32,7 @@ foundation = "1.9.4"
 runtime = "1.9.5"
 playServicesMaps = "19.2.0"
 animationCore = "1.9.5"
+volley = "1.2.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -71,6 +72,7 @@ androidx-foundation = { group = "androidx.compose.foundation", name = "foundatio
 androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 androidx-animation-core = { group = "androidx.compose.animation", name = "animation-core", version.ref = "animationCore" }
+volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

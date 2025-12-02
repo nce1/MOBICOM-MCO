@@ -57,6 +57,9 @@ class HomeViewModel(private val repository: SpotsRepository): ViewModel(){
         val updatedSpots = repository.updateDistances(rawSpots, location)
         _uiState.value = SpotsUiState.Success(updatedSpots)
     }
+    fun getSpotById(id: String): Spot? {
+        return rawSpots.find { it.id == id }
+    }
 }
 
 class HomeViewModelFactory : ViewModelProvider.Factory {
