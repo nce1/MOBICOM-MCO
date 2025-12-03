@@ -37,9 +37,12 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.OnMapsSdkInitializedCallback
+import com.mobdeve.s18.group5.bayanihanspots.manage.spots.AddSpotScreen
+import com.mobdeve.s18.group5.bayanihanspots.manage.spots.ManageSpotsScreen
 import com.mobdeve.s18.group5.bayanihanspots.moderator.ModeratorApp
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModelFactory
+import com.mobdeve.s18.group5.bayanihanspots.ui.notifications.NotificationScreen
 
 class MainActivity : ComponentActivity(), OnMapsSdkInitializedCallback {
     private lateinit var auth: FirebaseAuth
@@ -137,7 +140,8 @@ fun MainApp(auth: FirebaseAuth) {
                             popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
                             launchSingleTop = true
                         }
-                    }
+                    },
+                    onManageSpotsClick = {navController.navigate("manage_spots")}
                 )
             }
             composable("signup") {
@@ -171,6 +175,32 @@ fun MainApp(auth: FirebaseAuth) {
                     onSignupClick = { navController.navigate("signup") }
                 )
             }
+            composable("notifications") {
+                NotificationScreen(
+                    onBack = {
+                        navController.navigate("home") {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                        }
+                    }
+                )
+            }
+            composable("manage_spots"){
+                ManageSpotsScreen(
+                    onBack = { navController.popBackStack() },
+                    onAddSpot = { navController.navigate("add_spot") },
+                    onEditSpot = { spotId ->
+                        // TODO: Create an EditSpotScreen later
+                    }
+                )
+            }
+            composable("add_spot") {
+                AddSpotScreen(
+                    onBack = { navController.popBackStack() },
+                    onSaveSuccess = {
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
     }
 }
@@ -198,6 +228,23 @@ fun BottomNavBar(navController: NavHostController, isLoggedIn: Boolean) {
                 )
             },
             label = { Text("Events") }
+        )
+        NavigationBarItem(
+            selected = currentRoute(navController) == "notifications",
+            onClick = {
+                if (isLoggedIn) {
+                    navController.navigate("notifications")
+                } else {
+                    navController.navigate("login")
+                }
+            },
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_notifications_black_24dp),
+                    contentDescription = "Notifications"
+                )
+            },
+            label = { Text("Updates") },
         )
         NavigationBarItem(
             selected = currentRoute(navController) == "profile",
