@@ -25,7 +25,7 @@ import com.mobdeve.s18.group5.bayanihanspots.R
 import com.mobdeve.s18.group5.bayanihanspots.auth.data.model.LoggedInUser
 
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel, onLogout: () -> Unit, ){
+fun ProfileScreen(viewModel: ProfileViewModel, onLogout: () -> Unit, onManageSpotsClick: () -> Unit){
     val user: LoggedInUser? by viewModel.profile.observeAsState(null)
     val completedCount by viewModel.completedCount.observeAsState("00")
     val activeCount by viewModel.activeCount.observeAsState("00")
@@ -44,7 +44,7 @@ fun ProfileScreen(viewModel: ProfileViewModel, onLogout: () -> Unit, ){
     ) {
         Spacer(modifier = Modifier.height(64.dp))
         Image(
-            painter = painterResource(id = R.drawable.ic_home_black_24dp), // Replace
+            painter = painterResource(id = R.drawable.ic_home_black_24dp),
             contentDescription = "Profile Picture",
             modifier = Modifier
                 .size(120.dp)
@@ -113,7 +113,7 @@ fun ProfileScreen(viewModel: ProfileViewModel, onLogout: () -> Unit, ){
                     icon = R.drawable.ic_home_black_24dp,
                     title = "Manage Spots",
                     subtitle = "Create, Edit",
-                    onClick = { /* */ }
+                    onClick = onManageSpotsClick
                 )
                 Divider(modifier = Modifier.padding(start = 40.dp, top = 4.dp, bottom = 4.dp), color = Color(0xFFF0F0F0))
                 ProfileRow(

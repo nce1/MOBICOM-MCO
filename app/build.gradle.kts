@@ -77,6 +77,7 @@ dependencies {
     implementation(libs.androidx.animation.core)
     implementation(libs.volley)
     implementation(libs.material3)
+    implementation(libs.foundation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -89,6 +90,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore:26.0.2")
+    implementation("com.google.firebase:firebase-storage")
 
     // GSON
     implementation("com.google.code.gson:gson:2.10.1")
