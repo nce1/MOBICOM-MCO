@@ -47,10 +47,7 @@ import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddSpotScreen(
-    onBack: () -> Unit,
-    onSaveSuccess: () -> Unit
-) {
+fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
@@ -61,8 +58,9 @@ fun AddSpotScreen(
     var type by remember { mutableStateOf("Study") }
     var crowdLevel by remember { mutableStateOf("Moderate") }
 
+    // Default Location for Open Map
     var selectedLocation by remember { mutableStateOf(LatLng(14.5995, 120.9842)) }
-    var showMapPicker by remember { mutableStateOf(false) } // Controls the Full Screen Map
+    var showMapPicker by remember { mutableStateOf(false) }
 
     var selectedImages by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var isUploading by remember { mutableStateOf(false) }
@@ -70,10 +68,7 @@ fun AddSpotScreen(
     val typeOptions = listOf("Study", "Rest", "Play", "Market", "Dining")
     val crowdOptions = listOf("Quiet", "Moderate", "Busy", "Packed")
 
-    val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(),
-        onResult = { uris -> selectedImages = uris }
-    )
+    val photoPickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.PickMultipleVisualMedia(), onResult = { uris -> selectedImages = uris })
 
     Scaffold(
         topBar = {
@@ -83,36 +78,33 @@ fun AddSpotScreen(
                 windowInsets = WindowInsets(0, 0, 0, 0)
             )
         }
-    ) { innerPadding ->
+    ){ innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(
-                    top = innerPadding.calculateTopPadding(),
-                    start = 16.dp, end = 16.dp, bottom = 0.dp
-                )
+                .padding(top = innerPadding.calculateTopPadding(), start = 16.dp, end = 16.dp, bottom = 0.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        ){
             Text("Photos", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.height(100.dp).fillMaxWidth()) {
-                item {
+                item{
                     Box(
                         modifier = Modifier.size(100.dp).border(1.dp, Color.Gray, RoundedCornerShape(8.dp)).clickable {
                             photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                         },
                         contentAlignment = Alignment.Center
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally){
                             Icon(Icons.Default.AddPhotoAlternate, null, tint = Color.Gray)
                             Text("Add", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                         }
                     }
                 }
                 items(selectedImages) { uri ->
-                    Box {
+                    Box{
                         AsyncImage(model = uri, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(100.dp).clip(RoundedCornerShape(8.dp)))
-                        IconButton(onClick = { selectedImages = selectedImages - uri }, modifier = Modifier.align(Alignment.TopEnd).size(24.dp)) {
+                        IconButton(onClick = { selectedImages = selectedImages - uri }, modifier = Modifier.align(Alignment.TopEnd).size(24.dp)){
                             Icon(Icons.Default.Close, null, tint = Color.White, modifier = Modifier.background(Color.Black.copy(0.5f), CircleShape))
                         }
                     }
@@ -123,7 +115,6 @@ fun AddSpotScreen(
             CustomDropdown(label = "Crowd Level", options = crowdOptions, selectedOption = crowdLevel, onOptionSelected = { crowdLevel = it })
             OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
             Text("Location", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -131,27 +122,24 @@ fun AddSpotScreen(
                     .clip(RoundedCornerShape(12.dp))
                     .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
                     .clickable { showMapPicker = true } // <--- Opens Dialog
-            ) {
+            ){
                 GoogleMap(
                     modifier = Modifier.fillMaxSize(),
                     cameraPositionState = CameraPositionState(CameraPosition.fromLatLngZoom(selectedLocation, 15f)),
                     uiSettings = MapUiSettings(zoomControlsEnabled = false),
-                    googleMapOptionsFactory = {
-                        com.google.android.gms.maps.GoogleMapOptions().liteMode(true)
-                    }
-                ) {
+                    googleMapOptionsFactory = { com.google.android.gms.maps.GoogleMapOptions().liteMode(true) }
+                ){
                     Marker(state = MarkerState(position = selectedLocation))
                 }
                 Button(
                     onClick = { showMapPicker = true },
                     modifier = Modifier.align(Alignment.Center)
-                ) {
+                ){
                     Icon(Icons.Default.EditLocation, null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Set Location")
                 }
             }
-
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = {
@@ -168,18 +156,16 @@ fun AddSpotScreen(
                             crowdLevel = crowdLevel,
                             description = description,
                             status = "OPEN",
-                            approvalStatus = "PENDING",
                             userID = auth.currentUser?.uid ?: "Anonymous",
                             coordinates = GeoPoint(selectedLocation.latitude, selectedLocation.longitude),
                             imageList = imageUrls
                         )
                         firestore.collection("spots").add(newSpot)
-                            .addOnSuccessListener {
+                            .addOnSuccessListener{
                                 isUploading = false
                                 Toast.makeText(context, "Spot submitted!", Toast.LENGTH_LONG).show()
                                 onSaveSuccess()
-                            }
-                            .addOnFailureListener {
+                            }.addOnFailureListener{
                                 isUploading = false
                                 Toast.makeText(context, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
                             }
@@ -187,36 +173,25 @@ fun AddSpotScreen(
                 },
                 enabled = !isUploading,
                 modifier = Modifier.fillMaxWidth().height(50.dp)
-            ) {
+            ){
                 if (isUploading) Text("Uploading...") else Text("Submit Spot")
             }
             Spacer(modifier = Modifier.height(50.dp))
         }
     }
-    if (showMapPicker) {
-        Dialog(
-            onDismissRequest = { showMapPicker = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false) // Full Screen
-        ) {
+    if (showMapPicker){
+        Dialog(onDismissRequest = { showMapPicker = false }, properties = DialogProperties(usePlatformDefaultWidth = false)){
             Scaffold(
                 topBar = {
                     TopAppBar(
                         title = { Text("Pin Location") },
                         navigationIcon = { IconButton(onClick = { showMapPicker = false }) { Icon(Icons.Default.Close, null) } },
-                        actions = {
-                            TextButton(onClick = { showMapPicker = false }) {
-                                Text("Done", fontWeight = FontWeight.Bold)
-                            }
-                        }
+                        actions = { TextButton(onClick = { showMapPicker = false }) { Text("Done", fontWeight = FontWeight.Bold) } }
                     )
                 }
-            ) { padding ->
-                Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-
-                    val cameraPositionState = rememberCameraPositionState {
-                        position = CameraPosition.fromLatLngZoom(selectedLocation, 17f)
-                    }
-
+            ){ padding ->
+                Box(modifier = Modifier.padding(padding).fillMaxSize()){
+                    val cameraPositionState = rememberCameraPositionState { position = CameraPosition.fromLatLngZoom(selectedLocation, 17f) }
                     GoogleMap(
                         modifier = Modifier.fillMaxSize(),
                         cameraPositionState = cameraPositionState,
@@ -226,10 +201,7 @@ fun AddSpotScreen(
                         Icons.Default.LocationOn,
                         contentDescription = null,
                         tint = Color.Red,
-                        modifier = Modifier
-                            .size(48.dp)
-                            .align(Alignment.Center)
-                            .offset(y = (-24).dp)
+                        modifier = Modifier.size(48.dp).align(Alignment.Center).offset(y = (-24).dp)
                     )
                     Surface(
                         color = MaterialTheme.colorScheme.primaryContainer,
@@ -243,16 +215,14 @@ fun AddSpotScreen(
                         )
                     }
                     LaunchedEffect(cameraPositionState.isMoving){
-                        if (!cameraPositionState.isMoving) {
+                        if (!cameraPositionState.isMoving){
                             selectedLocation = cameraPositionState.position.target
                         }
                     }
                     Button(
                         onClick = { showMapPicker = false },
-                        modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp).fillMaxWidth()
-                    ) {
-                        Text("Confirm Location")
-                    }
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp)
+                    ){ Text("Confirm Location") }
                 }
             }
         }
@@ -261,7 +231,7 @@ fun AddSpotScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomDropdown(label: String, options: List<String>, selectedOption: String, onOptionSelected: (String) -> Unit) {
+fun CustomDropdown(label: String, options: List<String>, selectedOption: String, onOptionSelected: (String) -> Unit){
     var expanded by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }, modifier = Modifier.fillMaxWidth()) {
         OutlinedTextField(
@@ -270,7 +240,7 @@ fun CustomDropdown(label: String, options: List<String>, selectedOption: String,
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             modifier = Modifier.menuAnchor().fillMaxWidth()
         )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }){
             options.forEach { option ->
                 DropdownMenuItem(text = { Text(option) }, onClick = { onOptionSelected(option); expanded = false })
             }
@@ -278,7 +248,7 @@ fun CustomDropdown(label: String, options: List<String>, selectedOption: String,
     }
 }
 
-fun uploadImagesToFirebase(storage: FirebaseStorage, uris: List<Uri>, onComplete: (List<String>) -> Unit) {
+fun uploadImagesToFirebase(storage: FirebaseStorage, uris: List<Uri>, onComplete: (List<String>) -> Unit){
     if (uris.isEmpty()) { onComplete(emptyList()); return }
     val uploadedUrls = mutableListOf<String>()
     var count = 0

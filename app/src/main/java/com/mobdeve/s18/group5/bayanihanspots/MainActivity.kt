@@ -4,9 +4,12 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -38,7 +41,9 @@ import androidx.navigation.navArgument
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.OnMapsSdkInitializedCallback
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.AddSpotScreen
+import com.mobdeve.s18.group5.bayanihanspots.manage.spots.EditSpotScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.ManageSpotsScreen
+import com.mobdeve.s18.group5.bayanihanspots.manage.spots.ManageSpotsViewModel
 import com.mobdeve.s18.group5.bayanihanspots.moderator.ModeratorApp
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModelFactory
@@ -90,18 +95,19 @@ class MainActivity : ComponentActivity(), OnMapsSdkInitializedCallback {
 }
 
 @Composable
-fun MainApp(auth: FirebaseAuth) {
+fun MainApp(auth: FirebaseAuth){
     val sharedViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory())
     val navController = rememberNavController()
     val isLoggedIn by rememberAuthState(auth)
+    val manageSpotsViewModel: ManageSpotsViewModel = viewModel()
     Scaffold(bottomBar = { BottomNavBar(navController, isLoggedIn) })
     { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = "home",
             modifier = Modifier.padding(innerPadding)
-        ) {
-            composable("home") {
+        ){
+            composable("home"){
                 HomeScreen(
                     isLoggedIn = isLoggedIn,
                     onNavigateToDetails = { spot ->
@@ -109,12 +115,10 @@ fun MainApp(auth: FirebaseAuth) {
                     }
                 )
             }
-            composable("details/{spotId}",
-                arguments = listOf(navArgument("spotId") { type = NavType.StringType })
-            ) { backStackEntry ->
+            composable("details/{spotId}", arguments = listOf(navArgument("spotId") { type = NavType.StringType })){ backStackEntry ->
                 val spotId = backStackEntry.arguments?.getString("spotId") ?: ""
                 val spotFromMemory = sharedViewModel.getSpotById(spotId)
-                if (spotFromMemory != null) {
+                if (spotFromMemory != null){
                     SpotScreen(
                         spot = spotFromMemory,
                         onBack = { navController.popBackStack() }
@@ -131,7 +135,7 @@ fun MainApp(auth: FirebaseAuth) {
                     onLoginClick = { navController.navigate("login") }
                 )
             }
-            composable("profile") {
+            composable("profile"){
                 val context = LocalContext.current
                 val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(context.applicationContext))
                 ProfileScreen(
@@ -144,6 +148,7 @@ fun MainApp(auth: FirebaseAuth) {
                     onManageSpotsClick = {navController.navigate("manage_spots")}
                 )
             }
+            // Auth Area
             composable("signup") {
                 val context = LocalContext.current
                 val viewModel: SignupViewModel = viewModel(factory = SignupViewModelFactory(context.applicationContext))
@@ -157,14 +162,15 @@ fun MainApp(auth: FirebaseAuth) {
                     onLoginClick = { navController.navigate("login") }
                 )
             }
-            composable("login") {
+            composable("login"){
                 val context = LocalContext.current
                 val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(context.applicationContext))
 
                 LoginScreen(
                     viewModel = viewModel,
                     onLoginSuccess = {
-                        if (auth.currentUser?.email == "moderator.bayanihanspots@gmail.com") {
+                        if (auth.currentUser?.email == "moderator.bayanihanspots@gmail.com"){
+                            // Do Nothing
                         } else {
                             navController.navigate("profile") {
                                 popUpTo("signup") { inclusive = true }
@@ -175,31 +181,45 @@ fun MainApp(auth: FirebaseAuth) {
                     onSignupClick = { navController.navigate("signup") }
                 )
             }
-            composable("notifications") {
+            composable("notifications"){
                 NotificationScreen(
                     onBack = {
-                        navController.navigate("home") {
+                        navController.navigate("home"){
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                         }
                     }
                 )
             }
+            // Manage Spots Area
             composable("manage_spots"){
+                LaunchedEffect(Unit){ manageSpotsViewModel.fetchUserSpots() }
                 ManageSpotsScreen(
+                    spots = manageSpotsViewModel.mySpots,
+                    isLoading = manageSpotsViewModel.isLoading,
                     onBack = { navController.popBackStack() },
                     onAddSpot = { navController.navigate("add_spot") },
-                    onEditSpot = { spotId ->
-                        // TODO: Create an EditSpotScreen later
-                    }
+                    onEditSpot = { spotId -> navController.navigate("edit_spot/$spotId") }
                 )
             }
-            composable("add_spot") {
-                AddSpotScreen(
-                    onBack = { navController.popBackStack() },
-                    onSaveSuccess = {
-                        navController.popBackStack()
+            composable("add_spot"){
+                AddSpotScreen(onBack = { navController.popBackStack() }, onSaveSuccess = { navController.popBackStack() })
+            }
+            composable(route = "edit_spot/{spotId}", arguments = listOf(navArgument("spotId"){ type = NavType.StringType })){ backStackEntry ->
+                val spotId = backStackEntry.arguments?.getString("spotId") ?: ""
+                val spot = manageSpotsViewModel.getSpotById(spotId)
+                if (spot != null){
+                    EditSpotScreen(
+                        spot = spot,
+                        onBack = { navController.popBackStack() },
+                        onSaveSuccess = { manageSpotsViewModel.fetchUserSpots()
+                            navController.popBackStack() }
+                    )
+                } else{
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                        LaunchedEffect(Unit) { navController.popBackStack() }
                     }
-                )
+                }
             }
         }
     }

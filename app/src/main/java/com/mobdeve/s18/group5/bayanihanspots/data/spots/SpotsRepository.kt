@@ -1,9 +1,7 @@
 package com.mobdeve.s18.group5.bayanihanspots.data.spots
 
 import android.location.Location
-import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
-import com.mobdeve.s18.group5.bayanihanspots.utils.LocationUtil
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -35,12 +33,11 @@ class SpotsRepository(private val firestore: FirebaseFirestore = FirebaseFiresto
 
     fun updateDistances(spots: List<Spot>, userLocation: Location?): List<Spot> {
         if (userLocation == null) return spots
-
         return spots.map { spot ->
             val spotLat = spot.coordinates?.latitude ?: 0.0
             val spotLng = spot.coordinates?.longitude ?: 0.0
 
-            val distString = LocationUtil.calculateDistance(
+            val distString = calculateDistance(
                 userLat = userLocation.latitude,
                 userLng = userLocation.longitude,
                 venueLat = spotLat,
@@ -50,7 +47,18 @@ class SpotsRepository(private val firestore: FirebaseFirestore = FirebaseFiresto
             spot.copy(distanceString = " • $distString")
         }
     }
+    fun calculateDistance(userLat: Double, userLng: Double, venueLat: Double, venueLng: Double): String {
+        val results = FloatArray(1)
+        Location.distanceBetween(userLat, userLng, venueLat, venueLng, results)
+        val distanceInMeters = results[0]
+        return if (distanceInMeters > 1000) {
+            String.format("%.1f km", distanceInMeters / 1000)
+        } else {
+            "${distanceInMeters.toInt()} m"
+        }
+    }
     companion object{
         private const val SPOTS_COLLECTION = "spots"
     }
+
 }
