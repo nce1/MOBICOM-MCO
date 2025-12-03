@@ -77,13 +77,18 @@ fun ModeratorSpotScreen(spotId: String, onBack: () -> Unit){
                         onClick = {
                             firestore.collection("spots").document(spotId)
                                 .update("approvalStatus", "APPROVED")
-                                .addOnSuccessListener {
-                                    sendNotification(
-                                        userId = spot!!.userID,
-                                        title = "Request Approved!",
-                                        message = "Great news! '${spot!!.name}' is now live on the map."
-                                    )
-                                    Toast.makeText(context, "Approved! It is now live.", Toast.LENGTH_SHORT).show()
+                                .addOnSuccessListener{
+                                    val title: String
+                                    val message: String
+                                    if (spot!!.modificationType == "EDIT"){
+                                        title = "Changes Approved"
+                                        message = "Your edits to '${spot!!.name}' are now live."
+                                    } else{
+                                        title = "Spot Approved!"
+                                        message = "Congratulations! '${spot!!.name}' has been added to the map."
+                                    }
+                                    sendNotification(spot!!.userID, title, message)
+                                    Toast.makeText(context, "Approved!", Toast.LENGTH_SHORT).show()
                                     onBack()
                                 }
                         },

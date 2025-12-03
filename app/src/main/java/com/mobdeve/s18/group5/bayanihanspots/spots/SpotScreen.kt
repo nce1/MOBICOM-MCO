@@ -37,10 +37,7 @@ import com.mobdeve.s18.group5.bayanihanspots.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SpotScreen(
-    spot: Spot,
-    onBack: () -> Unit
-) {
+fun SpotScreen(spot: Spot, onBack: () -> Unit){
     val auth = FirebaseAuth.getInstance()
     val currentUser = auth.currentUser
     val firestore = FirebaseFirestore.getInstance()
@@ -65,17 +62,17 @@ fun SpotScreen(
                 }
             }
     }
-    val (myReview, otherReviews) = remember(reviews, currentUser) {
+    val (myReview, otherReviews) = remember(reviews, currentUser){
         val mine = reviews.find { it.userID == currentUser?.uid }
         val others = reviews.filter { it.userID != currentUser?.uid }
         Pair(mine, others)
     }
-    if (reviewToEdit != null) {
+    if (reviewToEdit != null){
         EditReviewDialog(
             review = reviewToEdit!!,
             onDismiss = { reviewToEdit = null },
             onConfirm = { newRating, newComment ->
-                if (reviewToEdit!!.reviewID.isNotEmpty()) {
+                if (reviewToEdit!!.reviewID.isNotEmpty()){
                     firestore.collection("spots").document(spot.id)
                         .collection("reviews").document(reviewToEdit!!.reviewID)
                         .update("rating", newRating, "comment", newComment)
@@ -87,13 +84,8 @@ fun SpotScreen(
     }
 
     Scaffold(containerColor = SurfaceOffWhite) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = innerPadding.calculateBottomPadding())
-                .verticalScroll(rememberScrollState())
-        ) {
-            Box(modifier = Modifier.fillMaxWidth().height(300.dp)) {
+        Column(modifier = Modifier.fillMaxSize().padding(bottom = innerPadding.calculateBottomPadding()).verticalScroll(rememberScrollState())){
+            Box(modifier = Modifier.fillMaxWidth().height(300.dp)){
                 if (spot.imageList.isNotEmpty()) {
                     val pagerState = rememberPagerState(pageCount = { spot.imageList.size })
                     HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
@@ -107,12 +99,12 @@ fun SpotScreen(
                             modifier = Modifier.fillMaxSize()
                         )
                     }
-                    if (spot.imageList.size > 1) {
+                    if (spot.imageList.size > 1){
                         Surface(
                             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
                             color = Color.Black.copy(alpha = 0.6f),
                             shape = CircleShape
-                        ) {
+                        ){
                             Text(
                                 text = "${pagerState.currentPage + 1}/${spot.imageList.size}",
                                 color = Color.White,
@@ -121,11 +113,11 @@ fun SpotScreen(
                             )
                         }
                     }
-                } else {
+                } else{
                     Box(
                         modifier = Modifier.fillMaxSize().background(SecondarySage.copy(alpha = 0.5f)),
                         contentAlignment = Alignment.Center
-                    ) {
+                    ){
                         Icon(Icons.Default.Image, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(48.dp))
                     }
                 }
@@ -133,57 +125,54 @@ fun SpotScreen(
                 IconButton(
                     onClick = onBack,
                     modifier = Modifier.padding(16.dp).background(Color.Black.copy(0.4f), CircleShape).align(Alignment.TopStart)
-                ) {
+                ){
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
                 }
             }
 
-            // SPOT DETAILS
-            Column(modifier = Modifier.padding(24.dp)) {
+            // Spot Section
+            Column(modifier = Modifier.padding(24.dp)){
                 Text(spot.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = TextCharcoal)
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)){
                     DetailBadge(text = spot.type, color = SecondarySage)
                     DetailBadge(text = "Open", color = PrimaryTeal.copy(alpha = 0.3f))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)){
                     DetailBadge(text = "Crowd: ${spot.crowdLevel}", color = Color.Gray.copy(0.2f))
-                    if (spot.distanceString.isNotBlank()) {
+                    if (spot.distanceString.isNotBlank()){
                         DetailBadge(text = spot.distanceString.replace("•", "").trim(), color = Color.Gray.copy(0.2f))
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
-
                 Text("About this spot", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = TextCharcoal)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(spot.description, style = MaterialTheme.typography.bodyMedium, color = TextCharcoal.copy(0.8f))
             }
 
             Divider(color = Color.LightGray.copy(0.5f), thickness = 1.dp)
-
-            // REVIEWS SECTION
-            Column(modifier = Modifier.padding(24.dp)) {
+            // Review Section
+            Column(modifier = Modifier.padding(24.dp)){
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
-                ) {
+                ){
                     Text("Reviews (${reviews.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextCharcoal)
                     if (myReview != null) {
                         Text("You reviewed this spot", style = MaterialTheme.typography.labelSmall, color = PrimaryTeal)
                     }
                 }
-
                 Spacer(modifier = Modifier.height(16.dp))
-                if (currentUser != null && myReview == null) {
+                if (currentUser != null && myReview == null){
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         elevation = CardDefaults.cardElevation(1.dp),
                         modifier = Modifier.fillMaxWidth()
-                    ) {
+                    ){
                         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Rate & Review", style = MaterialTheme.typography.labelMedium)
@@ -232,13 +221,13 @@ fun SpotScreen(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                 }
-                else if (currentUser == null) {
+                else if (currentUser == null){
                     Box(modifier = Modifier.fillMaxWidth().background(SecondarySage.copy(0.2f), RoundedCornerShape(8.dp)).padding(16.dp)) {
                         Text("Log in to review", style = MaterialTheme.typography.bodySmall, color = TextCharcoal)
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                 }
-                if (reviews.isEmpty()) {
+                if (reviews.isEmpty()){
                     Text("No reviews yet. Be the first!", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
                 } else {
                     if (myReview != null) {
@@ -264,8 +253,8 @@ fun SpotScreen(
         }
     }
 }
-fun deleteReview(db: FirebaseFirestore, spotId: String, review: Review, context: android.content.Context) {
-    if (review.reviewID.isNotEmpty()) {
+fun deleteReview(db: FirebaseFirestore, spotId: String, review: Review, context: android.content.Context){
+    if (review.reviewID.isNotEmpty()){
         db.collection("spots").document(spotId)
             .collection("reviews").document(review.reviewID)
             .delete()
@@ -273,7 +262,7 @@ fun deleteReview(db: FirebaseFirestore, spotId: String, review: Review, context:
     }
 }
 @Composable
-fun EditReviewDialog(review: Review, onDismiss: () -> Unit, onConfirm: (Int, String) -> Unit) {
+fun EditReviewDialog(review: Review, onDismiss: () -> Unit, onConfirm: (Int, String) -> Unit){
     var rating by remember { mutableStateOf(review.rating) }
     var comment by remember { mutableStateOf(review.comment) }
     AlertDialog(
@@ -298,6 +287,8 @@ fun EditReviewDialog(review: Review, onDismiss: () -> Unit, onConfirm: (Int, Str
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }
+
+// For Review
 @Composable
 fun ReviewItem(review: Review, isOwner: Boolean, onEdit: () -> Unit, onDelete: () -> Unit){
     Column(modifier = Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(8.dp)).padding(12.dp)) {

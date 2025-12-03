@@ -64,7 +64,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModelFacto
                     viewModel.updateUserLocation(location)
                 }
             }
-        } else {
+        } else{
             locationPermissionLauncher.launch(
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -80,7 +80,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModelFacto
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = PrimaryTeal,
                     titleContentColor = TextCharcoal
-                )
+                ), windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
         containerColor = SurfaceOffWhite

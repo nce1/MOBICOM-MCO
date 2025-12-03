@@ -14,7 +14,7 @@ data class Spot(
     val coordinates: GeoPoint? = null,
     val userID: String,
     val approvalStatus: String = "PENDING",
-
+    val modificationType: String = "NEW",
     val imageList: List<String> = emptyList(),
     @get:Exclude
     var distanceString: String = ""
@@ -28,6 +28,7 @@ fun DocumentSnapshot.toSpot(): Spot?{
     val coordinates = getGeoPoint("coordinates") ?: return null
     val userID = getString("userID") ?: return null
     val approvalStatus = getString("approvalStatus") ?: return null
+    val modificationType = getString("modificationType") ?: return null
     @Suppress("UNCHECKED_CAST")
     val imageList = get("imageList") as? List<String> ?: emptyList()
 
@@ -41,6 +42,7 @@ fun DocumentSnapshot.toSpot(): Spot?{
         coordinates = coordinates,
         userID = userID,
         approvalStatus = approvalStatus,
+        modificationType = modificationType,
         imageList = imageList
     )
 }

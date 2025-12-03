@@ -20,16 +20,10 @@ import com.mobdeve.s18.group5.bayanihanspots.data.spots.Spot
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.*
 
 @Composable
-fun SpotDetailsDialog(
-    spot: Spot,
-    onDismiss: () -> Unit,
-    onExpand: () -> Unit
-) {
+fun SpotDetailsDialog(spot: Spot, onDismiss: () -> Unit, onExpand: () -> Unit){
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             shape = MaterialTheme.shapes.large,
             colors = CardDefaults.cardColors(containerColor = SurfaceOffWhite),
             elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
@@ -37,28 +31,20 @@ fun SpotDetailsDialog(
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            ){
                 val coverImage = spot.imageList.firstOrNull()
                 if (coverImage != null) {
                     AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(coverImage)
-                            .crossfade(true)
-                            .build(),
+                        model = ImageRequest.Builder(LocalContext.current).data(coverImage).crossfade(true).build(),
                         contentDescription = "Spot Cover Image",
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
+                        modifier = Modifier.fillMaxWidth().height(200.dp)
                     )
                 } else {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                            .background(SecondarySage.copy(alpha = 0.3f)),
+                        modifier = Modifier.fillMaxWidth().height(200.dp).background(SecondarySage.copy(alpha = 0.3f)),
                         contentAlignment = Alignment.Center
-                    ) {
+                    ){
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(
                                 imageVector = Icons.Default.Image,
@@ -76,11 +62,9 @@ fun SpotDetailsDialog(
                     }
                 }
                 Column(
-                    modifier = Modifier
-                        .padding(24.dp)
-                        .fillMaxWidth(),
+                    modifier = Modifier.padding(24.dp).fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                ){
                     Text(
                         text = spot.name,
                         style = MaterialTheme.typography.headlineSmall,
@@ -91,10 +75,7 @@ fun SpotDetailsDialog(
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        DialogBadge(text = spot.type)
-                    }
-
+                    ) { DialogBadge(text = spot.type) }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = spot.description,
@@ -116,14 +97,11 @@ fun SpotDetailsDialog(
                         ) {
                             Text("Close")
                         }
-
                         Button(
                             onClick = onExpand,
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(containerColor = PrimaryTeal)
-                        ) {
-                            Text("Expand")
-                        }
+                        ) { Text("Expand") }
                     }
                 }
             }
@@ -132,11 +110,8 @@ fun SpotDetailsDialog(
 }
 
 @Composable
-fun DialogBadge(text: String) {
-    Surface(
-        color = SecondarySage.copy(alpha = 0.3f),
-        shape = MaterialTheme.shapes.small
-    ) {
+fun DialogBadge(text: String){
+    Surface(color = SecondarySage.copy(alpha = 0.3f), shape = MaterialTheme.shapes.small){
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
