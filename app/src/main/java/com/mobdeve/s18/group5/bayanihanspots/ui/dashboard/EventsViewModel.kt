@@ -71,6 +71,24 @@ class EventsViewModel(private val repository: OfflineFirstEventRepository) : Vie
             // Success case is handled by observeEvents() flow
         }
     }
+
+
+    fun joinEvent(event: Event){
+        val user = FirebaseAuth.getInstance().currentUser
+
+        if (user != null) {
+            viewModelScope.launch {
+                val result = repository.joinEvent(
+                    event = event,
+                    userId = user.uid,
+                    userEmail = user.email ?: ""
+                )
+                if (result.isFailure) {
+                    println("Join failed: ${result.exceptionOrNull()?.message}")
+                }
+            }
+        }
+    }
 }
 
 /**

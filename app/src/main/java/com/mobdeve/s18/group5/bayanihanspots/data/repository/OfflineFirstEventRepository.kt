@@ -8,6 +8,7 @@ import com.google.firebase.firestore.GeoPoint
 import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
 import com.mobdeve.s18.group5.bayanihanspots.data.local.BayanihanDatabase
 import com.mobdeve.s18.group5.bayanihanspots.data.local.entity.EventEntity
+import com.mobdeve.s18.group5.bayanihanspots.data.signups.Signups
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -177,12 +178,7 @@ class OfflineFirstEventRepository(
         val description = getString("description") ?: ""
 
         val locationValue = get("location")
-        val locationLabel = when (locationValue) {
-            is String -> locationValue
-            is GeoPoint -> formatGeoPoint(locationValue)
-            null -> getString("locationLabel") ?: "Unknown location"
-            else -> locationValue.toString()
-        }
+        val locationLabel = getString("locationLabel") ?: "Unknown location"
 
         val coordinates = when (locationValue) {
             is GeoPoint -> locationValue
@@ -213,6 +209,15 @@ class OfflineFirstEventRepository(
         val creatorId = getString("creatorId") ?: return null
         val approvalStatus = getString("approvalStatus") ?: return null
         val modificationType = getString("modificationType") ?: return null
+        val currentVolunteers = try{
+            when (val value = get("currentVolunteers")){
+                is Number -> value.toInt()
+                is String -> value.toIntOrNull()
+                else -> null
+            }
+        } catch(e: Exception){
+            null
+        }
         return Event(
             id = id,
             title = title,
@@ -225,7 +230,8 @@ class OfflineFirstEventRepository(
             scheduleUtcMillis = scheduleUtcMillis,
             creatorId = creatorId,
             approvalStatus = approvalStatus,
-            modificationType = modificationType
+            modificationType = modificationType,
+            currentVolunteers = currentVolunteers
         )
     }
 
@@ -241,7 +247,12 @@ class OfflineFirstEventRepository(
             val eventRef = firestore.collection("events").document(event.id)
 
             val signupId = "${event.id}_${userId}"
-            val signupRef = firestore.collection("event_signups").document(signupId)
+            val signupRef = firestore.collection("signups").document(signupId)
+
+            val notificationRef = firestore.collection("users")
+                .document(event.creatorId)
+                .collection("notifications")
+                .document()
 
             firestore.runTransaction { transaction ->
                 val snapshot = transaction.get(eventRef)
@@ -256,11 +267,17 @@ class OfflineFirstEventRepository(
                     "status" to "CONFIRMED",
                     "timestamp" to com.google.firebase.Timestamp.now()
                 )
+                val notifData = hashMapOf(
+                    "title" to "New Volunteer!",
+                    "message" to "$userEmail has joined '${event.title}'",
+                    "timestamp" to com.google.firebase.Timestamp.now(),
+                    "isRead" to false
+                )
 
                 transaction.set(signupRef, newSignup)
                 transaction.update(eventRef, "currentVolunteers", currentCount + 1)
+                transaction.set(notificationRef, notifData)
             }.await()
-
             Result.success("Successfully joined!")
         } catch (e: Exception) {
             val msg = if (e.message?.contains("Event is full") == true) "Event is full"
@@ -274,14 +291,33 @@ class OfflineFirstEventRepository(
     suspend fun leaveEvent(signupId: String, eventId: String): Result<String> {
         return try {
             val eventRef = firestore.collection("events").document(eventId)
-            val signupRef = firestore.collection("event_signups").document(signupId)
+            val signupRef = firestore.collection("signups").document(signupId)
 
             firestore.runTransaction { transaction ->
-                val snapshot = transaction.get(eventRef)
-                val currentCount = snapshot.getLong("currentVolunteers")?.toInt() ?: 0
+                val eventSnapshot = transaction.get(eventRef)
+                val currentCount = eventSnapshot.getLong("currentVolunteers")?.toInt() ?: 0
+                val creatorId = eventSnapshot.getString("creatorId") ?: ""
+                val eventTitle = eventSnapshot.getString("title") ?: "Event"
+
+                val signupSnapshot = transaction.get(signupRef)
+                val userEmail = signupSnapshot.getString("userEmail") ?: "A volunteer"
+
+                if (creatorId.isNotEmpty()) {
+                    val notificationRef = firestore.collection("users")
+                        .document(creatorId)
+                        .collection("notifications")
+                        .document() // Generate random ID
+
+                    val notifData = hashMapOf(
+                        "title" to "Volunteer Left",
+                        "message" to "$userEmail has cancelled their signup for '$eventTitle'.",
+                        "timestamp" to com.google.firebase.Timestamp.now(),
+                        "isRead" to false
+                    )
+                    transaction.set(notificationRef, notifData)
+                }
 
                 transaction.update(signupRef, "status", "CANCELLED")
-
                 if (currentCount > 0) {
                     transaction.update(eventRef, "currentVolunteers", currentCount - 1)
                 }
@@ -309,6 +345,21 @@ class OfflineFirstEventRepository(
                 trySend(ids)
             }
         }
+        awaitClose { listener.remove() }
+    }
+
+    // Find all events joined by the user
+    fun observeUserSignups(userId: String): Flow<List<Signups>> = callbackFlow {
+        val listener = firestore.collection("signups")
+            .whereEqualTo("userId", userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
+                val signups = snapshot?.toObjects(Signups::class.java) ?: emptyList()
+                trySend(signups)
+            }
         awaitClose { listener.remove() }
     }
 }

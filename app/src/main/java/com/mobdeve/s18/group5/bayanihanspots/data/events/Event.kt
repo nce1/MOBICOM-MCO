@@ -19,5 +19,5 @@ data class Event(
     var creatorId: String,
     var approvalStatus: String = "PENDING",
     var modificationType: String = "NEW",
-    val currentVolunteers: Int = 0
+    val currentVolunteers: Int? = 0
 )

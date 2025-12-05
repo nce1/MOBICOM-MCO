@@ -66,7 +66,7 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit, onSignupC
                     .padding(top = 96.dp, start = 24.dp, end = 24.dp)
             ) {
                 Text(
-                    text = "BayanihanSpots",
+                    text = "Bayanihan Spots",
                     color = Color(0xFFD9D6D6),
                     fontSize = 34.sp
                 )
@@ -173,22 +173,6 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit, onSignupC
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text("Log In", fontSize = 16.sp)
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "— or —",
-                        color = Color.Gray,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedButton(
-                        onClick = { /* TODO: Implement Google Sign In */ },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        border = BorderStroke(1.dp, Color.Gray)
-                    ) {
-                        Text("Sign in with Google", color = Color.Gray)
                     }
                 }
             }

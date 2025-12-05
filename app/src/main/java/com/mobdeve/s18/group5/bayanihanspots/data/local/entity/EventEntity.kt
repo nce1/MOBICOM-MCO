@@ -23,7 +23,7 @@ data class EventEntity(
     val creatorId: String,
     val approvalStatus: String,
     val modificationType: String,
-    val currentVolunteers: Int
+    val currentVolunteers: Int?
 ) {
     fun toEvent(): Event {
         return Event(
