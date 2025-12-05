@@ -198,11 +198,6 @@ sealed interface ActionResult {
     data class Error(val message: String) : ActionResult
 }
 
-sealed interface ActionResult {
-    data class Success(val message: String) : ActionResult
-    data class Error(val message: String) : ActionResult
-}
-
 /**
  * Factory that creates EventsViewModel with Application context for Room database access.
  */

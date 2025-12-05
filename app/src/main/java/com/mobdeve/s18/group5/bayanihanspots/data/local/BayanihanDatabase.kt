@@ -18,11 +18,8 @@ import com.mobdeve.s18.group5.bayanihanspots.data.local.entity.SpotEntity
 @Database(
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
     entities = [SpotEntity::class, EventEntity::class, PendingUploadEntity::class],
 =======
-=======
->>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
     entities = [
@@ -33,9 +30,6 @@ import com.mobdeve.s18.group5.bayanihanspots.data.local.entity.SpotEntity
         EventSignupEntity::class
     ],
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

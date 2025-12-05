@@ -27,11 +27,8 @@ import com.mobdeve.s18.group5.bayanihanspots.auth.data.model.LoggedInUser
 @Composable
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 fun ProfileScreen(viewModel: ProfileViewModel, onLogout: () -> Unit, onManageSpotsClick: () -> Unit, onManageSignUpsClick: () -> Unit){
 =======
-=======
->>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 fun ProfileScreen(
@@ -42,9 +39,6 @@ fun ProfileScreen(
     onManageSignupsClick: () -> Unit
 ){
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -151,11 +145,7 @@ fun ProfileScreen(
                     subtitle = "Edit, Cancel",
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
                     onClick = onManageSignUpsClick
-=======
-                    onClick = onManageSignupsClick
->>>>>>> Stashed changes
 =======
                     onClick = onManageSignupsClick
 >>>>>>> Stashed changes
