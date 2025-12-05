@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "643068816365-kme77tjv4nhmer6reqddqmf3uc0qr92k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mobdeve.s18.group5.bayanihanspots",
+            "certificate_hash": "fbbee65871e84cec1912e28330ea1ebd3a844289"
+          }
+        },
+        {
           "client_id": "643068816365-em4rv4dvfarnv23gm88883camjnlmqtn.apps.googleusercontent.com",
           "client_type": 3
         }

@@ -2,6 +2,7 @@ package com.mobdeve.s18.group5.bayanihanspots.ui.home
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,7 +28,13 @@ import com.mobdeve.s18.group5.bayanihanspots.ui.theme.TextCharcoal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory()), onNavigateToDetails: (Spot) -> Unit, isLoggedIn: Boolean){
+fun HomeScreen(
+    viewModel: HomeViewModel = viewModel(
+        factory = HomeViewModelFactory(LocalContext.current.applicationContext as Application)
+    ),
+    onNavigateToDetails: (Spot) -> Unit,
+    isLoggedIn: Boolean
+){
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var selectedCategory by remember { mutableStateOf("All") }

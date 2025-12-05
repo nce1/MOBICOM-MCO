@@ -1,10 +1,11 @@
 package com.mobdeve.s18.group5.bayanihanspots.ui.dashboard
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
-import com.mobdeve.s18.group5.bayanihanspots.data.events.EventsRepository
+import com.mobdeve.s18.group5.bayanihanspots.data.repository.OfflineFirstEventRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,41 +17,61 @@ sealed interface EventsUiState {
     data class Error(val message: String) : EventsUiState
 }
 
-class EventsViewModel(private val repository: EventsRepository) : ViewModel() {
+/**
+ * ViewModel that uses offline-first repository for events.
+ * UI always reads from Room (single source of truth).
+ * Firestore syncs in the background.
+ */
+class EventsViewModel(private val repository: OfflineFirstEventRepository) : ViewModel() {
     private val _uiState = MutableStateFlow<EventsUiState>(EventsUiState.Loading)
     val uiState: StateFlow<EventsUiState> = _uiState.asStateFlow()
 
     init {
         observeEvents()
+        // Start real-time sync from Firestore to Room
+        repository.startRealtimeSync()
     }
 
+    /**
+     * Observe events from Room database (offline-first)
+     */
     private fun observeEvents() {
         viewModelScope.launch {
-            repository.observeEvents().collect { result ->
-                _uiState.value = result.fold(
-                    onSuccess = { events -> EventsUiState.Success(events) },
-                    onFailure = { EventsUiState.Error(it.message ?: "Unable to load events") }
-                )
+            repository.observeEvents().collect { events ->
+                _uiState.value = EventsUiState.Success(events)
             }
         }
     }
 
+    /**
+     * Force refresh from Firestore
+     */
     fun refresh() {
         viewModelScope.launch {
             _uiState.value = EventsUiState.Loading
-            _uiState.value = repository.refreshEvents().fold(
-                onSuccess = { EventsUiState.Success(emptyList()) },
-                onFailure = { EventsUiState.Error(it.message ?: "Unable to refresh events") }
-            )
+            val result = repository.forceRefresh()
+            if (result.isFailure) {
+                // Events will still be observed from Room cache
+                _uiState.value = EventsUiState.Error("Unable to refresh. Showing cached data.")
+            }
+            // Success case is handled by observeEvents() flow
         }
     }
 }
 
-class EventsViewModelFactory : ViewModelProvider.Factory {
+/**
+ * Factory that creates EventsViewModel with Application context for Room database access.
+ */
+class EventsViewModelFactory(private val application: Application? = null) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(EventsViewModel::class.java)) {
+            val repository = if (application != null) {
+                OfflineFirstEventRepository.getInstance(application)
+            } else {
+                throw IllegalStateException("Application context required for offline-first mode. Use EventsViewModelFactory(application).")
+            }
             @Suppress("UNCHECKED_CAST")
-            return EventsViewModel(EventsRepository()) as T
+            return EventsViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

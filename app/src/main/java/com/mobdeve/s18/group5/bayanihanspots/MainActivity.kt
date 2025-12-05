@@ -1,5 +1,6 @@
 package com.mobdeve.s18.group5.bayanihanspots
 
+import android.app.Application
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -27,6 +28,7 @@ import com.mobdeve.s18.group5.bayanihanspots.auth.ui.login.LoginViewModelFactory
 import com.mobdeve.s18.group5.bayanihanspots.auth.ui.signup.SignupScreen
 import com.mobdeve.s18.group5.bayanihanspots.auth.ui.signup.SignupViewModel
 import com.mobdeve.s18.group5.bayanihanspots.auth.ui.signup.SignupViewModelFactory
+import com.mobdeve.s18.group5.bayanihanspots.data.sync.PendingUploadManager
 import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsViewModelFactory
@@ -55,6 +57,10 @@ class MainActivity : ComponentActivity(), OnMapsSdkInitializedCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         auth = Firebase.auth
+
+        // Initialize WorkManager for pending uploads (offline-first sync)
+        initializeOfflineSync()
+
         try {
             MapsInitializer.initialize(applicationContext, MapsInitializer.Renderer.LEGACY, this)
         } catch (e: Exception) {
@@ -77,11 +83,26 @@ class MainActivity : ComponentActivity(), OnMapsSdkInitializedCallback {
                         auth.signOut()
                     })
                 } else {
-                    MainApp(auth)
+                    MainApp(auth, application)
                 }
             }
         }
     }
+
+    /**
+     * Initialize offline-first sync with WorkManager.
+     * This schedules periodic uploads for data created while offline.
+     */
+    private fun initializeOfflineSync() {
+        try {
+            val pendingUploadManager = PendingUploadManager.getInstance(applicationContext)
+            pendingUploadManager.initializeWorker()
+            Log.d("MainActivity", "Offline sync initialized successfully")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to initialize offline sync: ${e.message}")
+        }
+    }
+
     override fun onMapsSdkInitialized(renderer: MapsInitializer.Renderer) {
         when (renderer) {
             MapsInitializer.Renderer.LATEST -> Log.d("MapsSetup", "Latest Renderer loaded")
@@ -95,8 +116,8 @@ class MainActivity : ComponentActivity(), OnMapsSdkInitializedCallback {
 }
 
 @Composable
-fun MainApp(auth: FirebaseAuth){
-    val sharedViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory())
+fun MainApp(auth: FirebaseAuth, application: Application){
+    val sharedViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(application))
     val navController = rememberNavController()
     val isLoggedIn by rememberAuthState(auth)
     val manageSpotsViewModel: ManageSpotsViewModel = viewModel()
@@ -126,7 +147,7 @@ fun MainApp(auth: FirebaseAuth){
                 }
             }
             composable("events") {
-                val viewModel: EventsViewModel = viewModel(factory = EventsViewModelFactory())
+                val viewModel: EventsViewModel = viewModel(factory = EventsViewModelFactory(application))
                 val state by viewModel.uiState.collectAsState()
                 EventsScreen(
                     state = state,
