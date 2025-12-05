@@ -10,10 +10,13 @@ import com.mobdeve.s18.group5.bayanihanspots.data.local.BayanihanDatabase
 import com.mobdeve.s18.group5.bayanihanspots.data.local.entity.EventEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlin.collections.map
 
 /**
  * Repository that implements offline-first strategy for Events:
@@ -43,6 +46,16 @@ class OfflineFirstEventRepository(
         }
     }
 
+    /**
+     * Observe approved events from Room (offline-first)
+     */
+    fun observeApprovedEvents(): Flow<List<Event>> {
+        // Start background sync when observing
+        syncFromFirestore()
+        return eventDao.observeApprovedEvents().map { entities ->
+            entities.map { it.toEvent() }
+        }
+    }
     /**
      * Observe all events from Room (offline-first)
      */
@@ -80,7 +93,12 @@ class OfflineFirstEventRepository(
                     .await()
 
                 val events = snapshot.documents.mapNotNull { doc ->
-                    doc.toEvent()?.let { EventEntity.fromEvent(it) }
+                    val event = doc.toEvent()
+                    if (event != null && event.approvalStatus == "APPROVED"){
+                        EventEntity.fromEvent(event)
+                    } else {
+                        null
+                    }
                 }
 
                 if (events.isNotEmpty()) {
@@ -105,7 +123,12 @@ class OfflineFirstEventRepository(
                 .await()
 
             val events = snapshot.documents.mapNotNull { doc ->
-                doc.toEvent()?.let { EventEntity.fromEvent(it) }
+                val event = doc.toEvent()
+                if (event != null && event.approvalStatus == "APPROVED"){
+                    EventEntity.fromEvent(event)
+                } else {
+                    null
+                }
             }
 
             eventDao.replaceAllEvents(events)
@@ -132,7 +155,12 @@ class OfflineFirstEventRepository(
                 snapshot?.let { snap ->
                     CoroutineScope(Dispatchers.IO).launch {
                         val events = snap.documents.mapNotNull { doc ->
-                            doc.toEvent()?.let { EventEntity.fromEvent(it) }
+                            val event = doc.toEvent()
+                            if (event != null && event.approvalStatus == "APPROVED"){
+                                EventEntity.fromEvent(event)
+                            } else {
+                                null
+                            }
                         }
                         if (events.isNotEmpty()) {
                             eventDao.insertEvents(events)
@@ -182,7 +210,9 @@ class OfflineFirstEventRepository(
         } catch (e: Exception) {
             null
         }
-
+        val creatorId = getString("creatorId") ?: return null
+        val approvalStatus = getString("approvalStatus") ?: return null
+        val modificationType = getString("modificationType") ?: return null
         return Event(
             id = id,
             title = title,
@@ -192,11 +222,94 @@ class OfflineFirstEventRepository(
             coordinates = coordinates,
             host = getString("host"),
             maxVolunteers = maxVolunteers,
-            scheduleUtcMillis = scheduleUtcMillis
+            scheduleUtcMillis = scheduleUtcMillis,
+            creatorId = creatorId,
+            approvalStatus = approvalStatus,
+            modificationType = modificationType
         )
     }
 
     private fun formatGeoPoint(point: GeoPoint): String =
         "Lat %.4f, Lng %.4f".format(point.latitude, point.longitude)
+
+
+    // SIGN UP PORTION
+
+    // Join an Event
+    suspend fun joinEvent(event: Event, userId: String, userEmail: String): Result<String> {
+        return try {
+            val eventRef = firestore.collection("events").document(event.id)
+
+            val signupId = "${event.id}_${userId}"
+            val signupRef = firestore.collection("event_signups").document(signupId)
+
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(eventRef)
+                val currentCount = snapshot.getLong("currentVolunteers")?.toInt() ?: 0
+
+                val newSignup = hashMapOf(
+                    "signupId" to signupId,
+                    "eventId" to event.id,
+                    "eventTitle" to event.title,
+                    "userId" to userId,
+                    "userEmail" to userEmail,
+                    "status" to "CONFIRMED",
+                    "timestamp" to com.google.firebase.Timestamp.now()
+                )
+
+                transaction.set(signupRef, newSignup)
+                transaction.update(eventRef, "currentVolunteers", currentCount + 1)
+            }.await()
+
+            Result.success("Successfully joined!")
+        } catch (e: Exception) {
+            val msg = if (e.message?.contains("Event is full") == true) "Event is full"
+            else if (e.message?.contains("already joined") == true) "You already joined"
+            else "Failed to join: ${e.message}"
+            Result.failure(Exception(msg))
+        }
+    }
+
+    // Leave an Event
+    suspend fun leaveEvent(signupId: String, eventId: String): Result<String> {
+        return try {
+            val eventRef = firestore.collection("events").document(eventId)
+            val signupRef = firestore.collection("event_signups").document(signupId)
+
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(eventRef)
+                val currentCount = snapshot.getLong("currentVolunteers")?.toInt() ?: 0
+
+                transaction.update(signupRef, "status", "CANCELLED")
+
+                if (currentCount > 0) {
+                    transaction.update(eventRef, "currentVolunteers", currentCount - 1)
+                }
+            }.await()
+
+            Result.success("Signup cancelled")
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // Find active events joined by a user
+    fun observeUserJoinedEventIds(userId: String): Flow<Set<String>> = callbackFlow{
+        val query = firestore.collection("signups")
+            .whereEqualTo("userId", userId)
+            .whereEqualTo("status", "CONFIRMED")
+
+        val listener = query.addSnapshotListener { snapshot, error ->
+            if (error != null){
+                trySend(emptySet())
+                return@addSnapshotListener
+            }
+            if (snapshot != null){
+                val ids = snapshot.documents.mapNotNull { it.getString("eventId") }.toSet()
+                trySend(ids)
+            }
+        }
+        awaitClose { listener.remove() }
+    }
 }
 

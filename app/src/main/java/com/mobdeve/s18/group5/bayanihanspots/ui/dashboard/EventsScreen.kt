@@ -23,7 +23,13 @@ fun EventsScreen(
     when (state) {
         EventsUiState.Loading -> EventsLoading()
         is EventsUiState.Error -> EventsError(state.message, onRefresh)
-        is EventsUiState.Success -> EventsList(state.events, isLoggedIn, onLoginClick, onJoinEvent)
+        is EventsUiState.Success -> EventsList(
+            events = state.events,
+            joinedEventIds = state.joinedEventIds,
+            isLoggedIn = isLoggedIn,
+            onLoginClick = onLoginClick,
+            onJoinEvent = onJoinEvent
+        )
     }
 }
 
@@ -58,6 +64,7 @@ private fun EventsError(message: String, onRetry: () -> Unit) {
 private fun EventsList(
     events: List<Event>,
     isLoggedIn: Boolean,
+    joinedEventIds: Set<String>,
     onLoginClick: () -> Unit,
     onJoinEvent: (String) -> Unit
 ) {

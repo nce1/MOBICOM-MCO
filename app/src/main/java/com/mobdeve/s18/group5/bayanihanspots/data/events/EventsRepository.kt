@@ -52,13 +52,21 @@ class EventsRepository(
             else -> getGeoPoint("coordinates")
         }
 
+        val creatorId = getString("creatorId") ?: return null
+        val approvalStatus = getString("approvalStatus") ?: return null
+        val modificationType = getString("modificationType") ?: return null
+        val currentVolunteers = getString("currentVolunteers") ?: return null
+
         return Event(
             id = id,
             title = title,
             schedule = schedule,
             locationLabel = locationLabel,
             description = description,
-            coordinates = coordinates
+            coordinates = coordinates,
+            creatorId = creatorId,
+            approvalStatus = approvalStatus,
+            modificationType = modificationType
         )
     }
 

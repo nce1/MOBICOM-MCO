@@ -4,16 +4,19 @@ import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
 import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
 import com.mobdeve.s18.group5.bayanihanspots.data.repository.OfflineFirstEventRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 sealed interface EventsUiState {
     object Loading : EventsUiState
-    data class Success(val events: List<Event>) : EventsUiState
+    data class Success(val events: List<Event>, val joinedEventIds: Set<String> = emptySet()) : EventsUiState
     data class Error(val message: String) : EventsUiState
 }
 
@@ -24,6 +27,7 @@ sealed interface EventsUiState {
  */
 class EventsViewModel(private val repository: OfflineFirstEventRepository) : ViewModel() {
     private val _uiState = MutableStateFlow<EventsUiState>(EventsUiState.Loading)
+    private var joinedIds = emptySet<String>()
     val uiState: StateFlow<EventsUiState> = _uiState.asStateFlow()
 
     init {
@@ -36,9 +40,19 @@ class EventsViewModel(private val repository: OfflineFirstEventRepository) : Vie
      * Observe events from Room database (offline-first)
      */
     private fun observeEvents() {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+        val eventsFlow = repository.observeApprovedEvents()
+        val joinedFlow = if (currentUserId != null) {
+            repository.observeUserJoinedEventIds(currentUserId)
+        } else {
+            flowOf(emptySet())
+        }
+
         viewModelScope.launch {
-            repository.observeEvents().collect { events ->
-                _uiState.value = EventsUiState.Success(events)
+            combine(eventsFlow, joinedFlow) { events, joinedIds ->
+                EventsUiState.Success(events, joinedIds)
+            }.collect { successState ->
+                _uiState.value = successState
             }
         }
     }

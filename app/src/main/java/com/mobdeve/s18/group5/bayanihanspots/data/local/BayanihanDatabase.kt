@@ -13,7 +13,7 @@ import com.mobdeve.s18.group5.bayanihanspots.data.local.entity.SpotEntity
 
 @Database(
     entities = [SpotEntity::class, EventEntity::class, PendingUploadEntity::class],
-    version = 2,
+    version = 4,
     exportSchema = false
 )
 abstract class BayanihanDatabase : RoomDatabase() {

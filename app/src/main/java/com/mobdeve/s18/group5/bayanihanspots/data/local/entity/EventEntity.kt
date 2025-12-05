@@ -1,5 +1,6 @@
 package com.mobdeve.s18.group5.bayanihanspots.data.local.entity
 
+import android.health.connect.datatypes.units.Volume
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
@@ -18,7 +19,11 @@ data class EventEntity(
     val host: String?,
     val maxVolunteers: Int?,
     val reminderOffsetsDays: String, // comma-separated
-    val scheduleUtcMillis: Long?
+    val scheduleUtcMillis: Long?,
+    val creatorId: String,
+    val approvalStatus: String,
+    val modificationType: String,
+    val currentVolunteers: Int
 ) {
     fun toEvent(): Event {
         return Event(
@@ -31,7 +36,11 @@ data class EventEntity(
             host = host,
             maxVolunteers = maxVolunteers,
             reminderOffsetsDays = parseReminderOffsets(reminderOffsetsDays),
-            scheduleUtcMillis = scheduleUtcMillis
+            scheduleUtcMillis = scheduleUtcMillis,
+            creatorId = creatorId,
+            approvalStatus = approvalStatus,
+            modificationType = modificationType,
+            currentVolunteers = currentVolunteers
         )
     }
 
@@ -48,7 +57,11 @@ data class EventEntity(
                 host = event.host,
                 maxVolunteers = event.maxVolunteers,
                 reminderOffsetsDays = event.reminderOffsetsDays.joinToString(","),
-                scheduleUtcMillis = event.scheduleUtcMillis
+                scheduleUtcMillis = event.scheduleUtcMillis,
+                creatorId = event.creatorId,
+                approvalStatus = event.approvalStatus,
+                modificationType = event.modificationType,
+                currentVolunteers = event.currentVolunteers
             )
         }
 

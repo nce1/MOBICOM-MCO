@@ -14,5 +14,10 @@ data class Event(
     val host: String? = null,
     val maxVolunteers: Int? = null,
     val reminderOffsetsDays: List<Int> = listOf(3, 1),
-    val scheduleUtcMillis: Long? = null
+    val scheduleUtcMillis: Long? = null,
+
+    var creatorId: String,
+    var approvalStatus: String = "PENDING",
+    var modificationType: String = "NEW",
+    val currentVolunteers: Int = 0
 )

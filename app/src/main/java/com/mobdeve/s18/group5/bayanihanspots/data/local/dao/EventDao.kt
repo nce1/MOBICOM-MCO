@@ -2,10 +2,13 @@ package com.mobdeve.s18.group5.bayanihanspots.data.local.dao
 
 import androidx.room.*
 import com.mobdeve.s18.group5.bayanihanspots.data.local.entity.EventEntity
+import com.mobdeve.s18.group5.bayanihanspots.data.local.entity.SpotEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface EventDao {
+    @Query("SELECT * FROM events WHERE approvalStatus = 'APPROVED' ORDER BY schedule ASC")
+    fun observeApprovedEvents(): Flow<List<EventEntity>>
     @Query("SELECT * FROM events ORDER BY schedule ASC")
     fun observeAllEvents(): Flow<List<EventEntity>>
 
