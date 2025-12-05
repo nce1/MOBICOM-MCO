@@ -1,6 +1,6 @@
 package com.mobdeve.s18.group5.bayanihanspots.data.local.entity
-
-import androidx.room.Entity
+)
+    val notificationScheduled: Boolean = false
 import androidx.room.PrimaryKey
 
 /**
@@ -20,5 +20,4 @@ data class EventSignupEntity(
     val joinedAt: Long = System.currentTimeMillis(),
     val notificationScheduled: Boolean = false
 )
-
 

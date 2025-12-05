@@ -1,14 +1,6 @@
 package com.mobdeve.s18.group5.bayanihanspots.ui.dashboard
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-import android.util.Log
-=======
 import android.widget.Toast
->>>>>>> Stashed changes
-=======
-import android.widget.Toast
->>>>>>> Stashed changes
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,13 +16,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
-import com.mobdeve.s18.group5.bayanihanspots.manage.signups.formatScheduleTime
-=======
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -38,16 +23,6 @@ import androidx.compose.ui.unit.dp
 import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.PrimaryTeal
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.SecondarySage
->>>>>>> Stashed changes
-=======
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
-import com.mobdeve.s18.group5.bayanihanspots.ui.theme.PrimaryTeal
-import com.mobdeve.s18.group5.bayanihanspots.ui.theme.SecondarySage
->>>>>>> Stashed changes
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.SurfaceOffWhite
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.TextCharcoal
 
@@ -57,21 +32,11 @@ fun EventsScreen(
     onRefresh: () -> Unit,
     isLoggedIn: Boolean,
     onLoginClick: () -> Unit,
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    onJoinEvent: (String) -> Unit
-=======
-=======
->>>>>>> Stashed changes
     onJoinEvent: (Event) -> Unit = {},
     onLeaveEvent: (String) -> Unit = {},
     onToggleFavorite: (Event) -> Unit = {},
     actionResult: ActionResult? = null,
     onClearActionResult: () -> Unit = {}
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 ) {
     val context = LocalContext.current
 
@@ -134,15 +99,8 @@ private fun EventsError(message: String, onRetry: () -> Unit) {
 private fun EventsList(
     events: List<Event>,
     joinedEventIds: Set<String>,
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
+    favoriteEventIds: Set<String>,
     isLoggedIn: Boolean,
-=======
-    favoriteEventIds: Set<String>,
->>>>>>> Stashed changes
-=======
-    favoriteEventIds: Set<String>,
->>>>>>> Stashed changes
     onLoginClick: () -> Unit,
     onJoinEvent: (Event) -> Unit,
     onLeaveEvent: (String) -> Unit,
@@ -156,28 +114,6 @@ private fun EventsList(
     ) {
         item {
             Column(modifier = Modifier.fillMaxWidth()) {
-<<<<<<< Updated upstream
-                Text("Programs & Events", style = MaterialTheme.typography.headlineSmall, color = TextCharcoal)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("Volunteer with nearby barangays, gardens, and pop-ups.", style = MaterialTheme.typography.bodyMedium, color = TextCharcoal)
-            }
-        }
-        items(events) { event ->
-            Log.d("EVENTS", "Max: "+ event.maxVolunteers)
-            Log.d("EVENTS", "Curr: "+ event.currentVolunteers)
-            val max = event.maxVolunteers ?: 0
-            val current = event.currentVolunteers
-            val isFull = max > 0 && current!! >= max
-            val isJoined = joinedEventIds.contains(event.id)
-            val isButtonEnabled = !isJoined && !isFull
-            val buttonText = when {
-                isJoined -> "Joined"
-                isFull -> "Full"
-                !isLoggedIn -> "Login to RSVP"
-                else -> "Join"
-            }
-            Card(
-=======
                 Text(
                     text = "Programs & Events",
                     style = MaterialTheme.typography.headlineSmall,
@@ -196,7 +132,9 @@ private fun EventsList(
         if (events.isEmpty()) {
             item {
                 Box(
-                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -250,39 +188,10 @@ private fun EventCard(
         Column(modifier = Modifier.padding(16.dp)) {
             // Header with title and favorite button
             Row(
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(event.title, style = MaterialTheme.typography.titleMedium, color = TextCharcoal, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("${formatScheduleTime(event.schedule)} • ${event.locationLabel}", color = TextCharcoal)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(event.description, style = MaterialTheme.typography.bodyMedium, color = TextCharcoal)
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Button(
-                        onClick = {
-                            if (isLoggedIn) {
-                                onJoinEvent(event.id)
-                            } else {
-                                onLoginClick()
-                            }
-                        },
-                        enabled = isButtonEnabled,
-                        modifier = Modifier.align(Alignment.End)
-                    ){
-                        Text(buttonText)
-=======
-=======
->>>>>>> Stashed changes
                 Text(
                     text = event.title,
                     style = MaterialTheme.typography.titleMedium,
@@ -349,11 +258,12 @@ private fun EventCard(
                         tint = PrimaryTeal
                     )
                     Spacer(modifier = Modifier.width(8.dp))
+                    val currentVols = event.currentVolunteers ?: 0
                     Text(
-                        text = "${event.currentVolunteers}/${event.maxVolunteers} volunteers",
+                        text = "$currentVols/${event.maxVolunteers} volunteers",
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (event.currentVolunteers >= event.maxVolunteers) Color.Red.copy(alpha = 0.8f)
-                               else TextCharcoal.copy(alpha = 0.7f)
+                        color = if (currentVols >= event.maxVolunteers) Color.Red.copy(alpha = 0.8f)
+                        else TextCharcoal.copy(alpha = 0.7f)
                     )
                 }
             }
@@ -450,7 +360,8 @@ private fun EventCard(
                 }
             } else {
                 // Not joined - show join button
-                val isFull = event.maxVolunteers != null && event.currentVolunteers >= event.maxVolunteers
+                val currentVols = event.currentVolunteers ?: 0
+                val isFull = event.maxVolunteers != null && currentVols >= event.maxVolunteers
 
                 Button(
                     onClick = {
@@ -474,13 +385,10 @@ private fun EventCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Join & Get Reminders")
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                     }
                 }
             }
         }
     }
 }
+

@@ -69,5 +69,12 @@ object WorkManagerHelper {
         WorkManager.getInstance(context).cancelAllWorkByTag("periodic_sync")
         Log.d(TAG, "Cancelled all sync work")
     }
+
+    /**
+     * Get info about pending work for debugging.
+     */
+    fun getWorkInfo(context: Context, tag: String): ListenableFuture<List<WorkInfo>> {
+        return WorkManager.getInstance(context).getWorkInfosByTag(tag)
+    }
 }
 
