@@ -24,7 +24,9 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.EditLocation
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,6 +41,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.FirebaseFirestore
@@ -75,6 +78,8 @@ fun EditSpotScreen(spot: Spot, onBack: () -> Unit, onSaveSuccess: () -> Unit){
         )
     }
     var showMapPicker by remember { mutableStateOf(false) }
+    var addressText by remember { mutableStateOf("") }
+    var isSearchingAddress by remember { mutableStateOf(false) }
 
     val typeOptions = listOf("Study", "Rest", "Play", "Market", "Dining")
     val crowdOptions = listOf("Quiet", "Moderate", "Busy", "Packed")
@@ -170,6 +175,51 @@ fun EditSpotScreen(spot: Spot, onBack: () -> Unit, onSaveSuccess: () -> Unit){
             CustomDropdown(label = "Crowd Level", options = crowdOptions, selectedOption = crowdLevel, onOptionSelected = { crowdLevel = it })
             OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
             Text("Location", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+
+            // Address search bar
+            OutlinedTextField(
+                value = addressText,
+                onValueChange = { addressText = it },
+                label = { Text("Search address") },
+                placeholder = { Text("Enter address or place name") },
+                leadingIcon = {
+                    if (isSearchingAddress) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    }
+                },
+                trailingIcon = {
+                    if (addressText.isNotBlank()) {
+                        IconButton(
+                            onClick = {
+                                if (addressText.isNotBlank() && !isSearchingAddress) {
+                                    isSearchingAddress = true
+                                    searchAddress(context, addressText) { result ->
+                                        isSearchingAddress = false
+                                        if (result != null) {
+                                            selectedLocation = result
+                                            Toast.makeText(context, "Location found!", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            Toast.makeText(context, "Could not find address", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                }
+                            },
+                            enabled = !isSearchingAddress
+                        ) {
+                            Icon(Icons.Default.MyLocation, contentDescription = "Search location")
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                enabled = !isSearchingAddress
+            )
+
             Box(
                 modifier = Modifier.fillMaxWidth().height(180.dp).clip(RoundedCornerShape(12.dp))
                     .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp)).clickable { showMapPicker = true }
@@ -223,12 +273,84 @@ fun EditSpotScreen(spot: Spot, onBack: () -> Unit, onSaveSuccess: () -> Unit){
         }
     }
     if (showMapPicker){
+        var mapSearchQuery by remember { mutableStateOf("") }
+        var isMapSearching by remember { mutableStateOf(false) }
+
         Dialog(onDismissRequest = { showMapPicker = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
             Scaffold(topBar = { TopAppBar(title = { Text("Update Location") }, navigationIcon = { IconButton(onClick = { showMapPicker = false }) { Icon(Icons.Default.Close, null) } }, actions = { TextButton(onClick = { showMapPicker = false }) { Text("Done", fontWeight = FontWeight.Bold) } }) }) { padding ->
                 Box(modifier = Modifier.padding(padding).fillMaxSize()) {
                     val cameraPositionState = rememberCameraPositionState { position = CameraPosition.fromLatLngZoom(selectedLocation, 17f) }
+
+                    // Update camera when selectedLocation changes from search
+                    LaunchedEffect(selectedLocation) {
+                        cameraPositionState.animate(
+                            update = CameraUpdateFactory.newLatLngZoom(selectedLocation, 17f),
+                            durationMs = 500
+                        )
+                    }
+
                     GoogleMap(modifier = Modifier.fillMaxSize(), cameraPositionState = cameraPositionState, uiSettings = MapUiSettings(zoomControlsEnabled = true))
                     Icon(Icons.Default.LocationOn, null, tint = Color.Red, modifier = Modifier.size(48.dp).align(Alignment.Center).offset(y = (-24).dp))
+
+                    // Search bar at the top
+                    OutlinedTextField(
+                        value = mapSearchQuery,
+                        onValueChange = { mapSearchQuery = it },
+                        placeholder = { Text("Search address...") },
+                        leadingIcon = {
+                            if (isMapSearching) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Default.Search, contentDescription = "Search")
+                            }
+                        },
+                        trailingIcon = {
+                            if (mapSearchQuery.isNotBlank()) {
+                                IconButton(
+                                    onClick = {
+                                        if (!isMapSearching) {
+                                            isMapSearching = true
+                                            searchAddress(context, mapSearchQuery) { result ->
+                                                isMapSearching = false
+                                                if (result != null) {
+                                                    selectedLocation = result
+                                                } else {
+                                                    Toast.makeText(context, "Could not find address", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        }
+                                    },
+                                    enabled = !isMapSearching
+                                ) {
+                                    Icon(Icons.Default.MyLocation, contentDescription = "Go to location")
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
+                        ),
+                        enabled = !isMapSearching
+                    )
+
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.align(Alignment.TopCenter).padding(top = 70.dp)
+                    ){
+                        Text(
+                            "Move map to center the pin",
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+
                     LaunchedEffect(cameraPositionState.isMoving) { if (!cameraPositionState.isMoving) selectedLocation = cameraPositionState.position.target }
                     Button(onClick = { showMapPicker = false }, modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp)) { Text("Confirm Location") }
                 }

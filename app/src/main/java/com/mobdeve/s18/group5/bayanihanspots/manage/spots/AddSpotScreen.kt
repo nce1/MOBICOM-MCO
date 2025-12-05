@@ -5,6 +5,8 @@ import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -45,6 +47,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
@@ -81,6 +84,7 @@ fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
     var isUploading by remember { mutableStateOf(false) }
     var showImageSourceDialog by remember { mutableStateOf(false) }
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+    var isSearchingAddress by remember { mutableStateOf(false) }
 
     val typeOptions = listOf("Study", "Rest", "Play", "Market", "Dining")
     val crowdOptions = listOf("Quiet", "Moderate", "Busy", "Packed")
@@ -170,44 +174,48 @@ fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
             OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
             Text("Location", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
 
-            // Address search bar
+            // Address search bar with improved geocoding
             OutlinedTextField(
                 value = addressText,
                 onValueChange = { addressText = it },
                 label = { Text("Search address") },
                 placeholder = { Text("Enter address or place name") },
-                trailingIcon = {
-                    IconButton(
-                        onClick = {
-                            if (addressText.isNotBlank()) {
-                                try {
-                                    val geocoder = Geocoder(context)
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                        geocoder.getFromLocationName(addressText, 1) { addresses ->
-                                            if (addresses.isNotEmpty()) {
-                                                val address = addresses[0]
-                                                selectedLocation = LatLng(address.latitude, address.longitude)
-                                            }
-                                        }
-                                    } else {
-                                        @Suppress("DEPRECATION")
-                                        val addresses = geocoder.getFromLocationName(addressText, 1)
-                                        if (!addresses.isNullOrEmpty()) {
-                                            val address = addresses[0]
-                                            selectedLocation = LatLng(address.latitude, address.longitude)
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Could not find address", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        }
-                    ) {
+                leadingIcon = {
+                    if (isSearchingAddress) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
                 },
+                trailingIcon = {
+                    if (addressText.isNotBlank()) {
+                        IconButton(
+                            onClick = {
+                                if (addressText.isNotBlank() && !isSearchingAddress) {
+                                    isSearchingAddress = true
+                                    searchAddress(context, addressText) { result ->
+                                        isSearchingAddress = false
+                                        if (result != null) {
+                                            selectedLocation = result
+                                            Toast.makeText(context, "Location found!", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            Toast.makeText(context, "Could not find address", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                }
+                            },
+                            enabled = !isSearchingAddress
+                        ) {
+                            Icon(Icons.Default.MyLocation, contentDescription = "Search location")
+                        }
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                enabled = !isSearchingAddress
             )
 
             Box(
@@ -236,46 +244,62 @@ fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = {
-                    if (name.isBlank() || description.isBlank()) {
-                        Toast.makeText(context, "Please fill in name and description", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-                    isUploading = true
-                    uploadImagesToFirebase(storage, selectedImages) { imageUrls ->
-                        val newSpot = Spot(
-                            id = "",
-                            name = name,
-                            type = type,
-                            crowdLevel = crowdLevel,
-                            description = description,
-                            status = "OPEN",
-                            userID = auth.currentUser?.uid ?: "Anonymous",
-                            coordinates = GeoPoint(selectedLocation.latitude, selectedLocation.longitude),
-                            imageList = imageUrls
-                        )
-                        firestore.collection("spots").add(newSpot)
-                            .addOnSuccessListener{
-                                isUploading = false
-                                Toast.makeText(context, "Spot submitted!", Toast.LENGTH_LONG).show()
-                                onSaveSuccess()
-                            }.addOnFailureListener{
-                                isUploading = false
-                                Toast.makeText(context, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
-                            }
-                    }
-                },
-                enabled = !isUploading,
-                modifier = Modifier.fillMaxWidth().height(50.dp)
-            ){
-                if (isUploading) Text("Uploading...") else Text("Submit Spot")
+
+            // Cancel and Submit buttons row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onBack,
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    enabled = !isUploading
+                ) {
+                    Text("Cancel")
+                }
+
+                Button(
+                    onClick = {
+                        if (name.isBlank() || description.isBlank()) {
+                            Toast.makeText(context, "Please fill in name and description", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                        isUploading = true
+                        uploadImagesToFirebase(storage, selectedImages) { imageUrls ->
+                            val newSpot = Spot(
+                                id = "",
+                                name = name,
+                                type = type,
+                                crowdLevel = crowdLevel,
+                                description = description,
+                                status = "OPEN",
+                                userID = auth.currentUser?.uid ?: "Anonymous",
+                                coordinates = GeoPoint(selectedLocation.latitude, selectedLocation.longitude),
+                                imageList = imageUrls
+                            )
+                            firestore.collection("spots").add(newSpot)
+                                .addOnSuccessListener{
+                                    isUploading = false
+                                    Toast.makeText(context, "Spot submitted!", Toast.LENGTH_LONG).show()
+                                    onSaveSuccess()
+                                }.addOnFailureListener{
+                                    isUploading = false
+                                    Toast.makeText(context, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
+                                }
+                        }
+                    },
+                    enabled = !isUploading,
+                    modifier = Modifier.weight(1f).height(50.dp)
+                ){
+                    if (isUploading) Text("Uploading...") else Text("Submit Spot")
+                }
             }
             Spacer(modifier = Modifier.height(50.dp))
         }
     }
     if (showMapPicker){
         var mapSearchQuery by remember { mutableStateOf("") }
+        var isMapSearching by remember { mutableStateOf(false) }
 
         Dialog(onDismissRequest = { showMapPicker = false }, properties = DialogProperties(usePlatformDefaultWidth = false)){
             Scaffold(
@@ -289,6 +313,15 @@ fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
             ){ padding ->
                 Box(modifier = Modifier.padding(padding).fillMaxSize()){
                     val cameraPositionState = rememberCameraPositionState { position = CameraPosition.fromLatLngZoom(selectedLocation, 17f) }
+
+                    // Update camera when selectedLocation changes from search
+                    LaunchedEffect(selectedLocation) {
+                        cameraPositionState.animate(
+                            update = CameraUpdateFactory.newLatLngZoom(selectedLocation, 17f),
+                            durationMs = 500
+                        )
+                    }
+
                     GoogleMap(
                         modifier = Modifier.fillMaxSize(),
                         cameraPositionState = cameraPositionState,
@@ -306,34 +339,32 @@ fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
                         value = mapSearchQuery,
                         onValueChange = { mapSearchQuery = it },
                         placeholder = { Text("Search address...") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                        leadingIcon = {
+                            if (isMapSearching) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Default.Search, contentDescription = "Search")
+                            }
+                        },
                         trailingIcon = {
                             if (mapSearchQuery.isNotBlank()) {
                                 IconButton(
                                     onClick = {
-                                        try {
-                                            val geocoder = Geocoder(context)
-                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                                geocoder.getFromLocationName(mapSearchQuery, 1) { addresses ->
-                                                    if (addresses.isNotEmpty()) {
-                                                        val address = addresses[0]
-                                                        selectedLocation = LatLng(address.latitude, address.longitude)
-                                                    }
-                                                }
-                                            } else {
-                                                @Suppress("DEPRECATION")
-                                                val addresses = geocoder.getFromLocationName(mapSearchQuery, 1)
-                                                if (!addresses.isNullOrEmpty()) {
-                                                    val address = addresses[0]
-                                                    selectedLocation = LatLng(address.latitude, address.longitude)
+                                        if (!isMapSearching) {
+                                            isMapSearching = true
+                                            searchAddress(context, mapSearchQuery) { result ->
+                                                isMapSearching = false
+                                                if (result != null) {
+                                                    selectedLocation = result
+                                                } else {
+                                                    Toast.makeText(context, "Could not find address", Toast.LENGTH_SHORT).show()
                                                 }
                                             }
-                                        } catch (e: Exception) {
-                                            Toast.makeText(context, "Could not find address", Toast.LENGTH_SHORT).show()
                                         }
-                                    }
+                                    },
+                                    enabled = !isMapSearching
                                 ) {
-                                    Icon(Icons.Default.Search, contentDescription = "Search")
+                                    Icon(Icons.Default.MyLocation, contentDescription = "Go to location")
                                 }
                             }
                         },
@@ -346,7 +377,8 @@ fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White
-                        )
+                        ),
+                        enabled = !isMapSearching
                     )
 
                     Surface(
@@ -487,5 +519,48 @@ fun createImageUri(context: android.content.Context): Uri {
         "${context.packageName}.fileprovider",
         imageFile
     )
+}
+
+/**
+ * Search for an address and return LatLng coordinates
+ * Works on all Android versions with proper main thread callback
+ */
+fun searchAddress(context: android.content.Context, query: String, onResult: (LatLng?) -> Unit) {
+    val handler = Handler(Looper.getMainLooper())
+    try {
+        val geocoder = Geocoder(context, Locale.getDefault())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            geocoder.getFromLocationName(query, 1) { addresses ->
+                handler.post {
+                    if (addresses.isNotEmpty()) {
+                        val address = addresses[0]
+                        onResult(LatLng(address.latitude, address.longitude))
+                    } else {
+                        onResult(null)
+                    }
+                }
+            }
+        } else {
+            // Run synchronously on background thread for older versions
+            Thread {
+                try {
+                    @Suppress("DEPRECATION")
+                    val addresses = geocoder.getFromLocationName(query, 1)
+                    handler.post {
+                        if (!addresses.isNullOrEmpty()) {
+                            val address = addresses[0]
+                            onResult(LatLng(address.latitude, address.longitude))
+                        } else {
+                            onResult(null)
+                        }
+                    }
+                } catch (e: Exception) {
+                    handler.post { onResult(null) }
+                }
+            }.start()
+        }
+    } catch (e: Exception) {
+        handler.post { onResult(null) }
+    }
 }
 
