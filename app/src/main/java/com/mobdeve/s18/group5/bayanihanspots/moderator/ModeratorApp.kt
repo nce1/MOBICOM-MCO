@@ -8,16 +8,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -25,7 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,11 +46,23 @@ fun ModeratorApp(onLogout: () -> Unit) {
     val navController = rememberNavController()
     val firestore = FirebaseFirestore.getInstance()
 
-    var pendingEventsCount by remember { mutableStateOf(0) }
-    var pendingProgramsCount by remember { mutableStateOf(0) }
+    var pendingSpotsCount by remember { mutableIntStateOf(0) }
+    var pendingEventsCount by remember { mutableIntStateOf(0) }
 
+    // Listen for pending spots
     LaunchedEffect(Unit) {
         firestore.collection("spots")
+            .whereEqualTo("approvalStatus", "PENDING")
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null) {
+                    pendingSpotsCount = snapshot.size()
+                }
+            }
+    }
+
+    // Listen for pending events
+    LaunchedEffect(Unit) {
+        firestore.collection("events")
             .whereEqualTo("approvalStatus", "PENDING")
             .addSnapshotListener { snapshot, _ ->
                 if (snapshot != null) {
@@ -59,12 +70,35 @@ fun ModeratorApp(onLogout: () -> Unit) {
                 }
             }
     }
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
     Scaffold(
         bottomBar = {
             NavigationBar {
+                NavigationBarItem(
+                    icon = {
+                        BadgedBox(
+                            badge = {
+                                if (pendingSpotsCount > 0) {
+                                    Badge { Text("$pendingSpotsCount") }
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.Place, contentDescription = "Spots")
+                        }
+                    },
+                    label = { Text("Spots") },
+                    selected = currentRoute == "spots" || currentRoute?.startsWith("spot_detail") == true,
+                    onClick = {
+                        if (currentRoute != "spots") {
+                            navController.navigate("spots") {
+                                popUpTo("spots") { inclusive = true }
+                            }
+                        }
+                    }
+                )
                 NavigationBarItem(
                     icon = {
                         BadgedBox(
@@ -78,27 +112,17 @@ fun ModeratorApp(onLogout: () -> Unit) {
                         }
                     },
                     label = { Text("Events") },
-                    selected = currentRoute == "events",
-                    onClick = { navController.navigate("events") }
-                )
-                NavigationBarItem(
-                    icon = {
-                        BadgedBox(
-                            badge = {
-                                if (pendingProgramsCount > 0) {
-                                    Badge { Text("$pendingProgramsCount") }
-                                }
+                    selected = currentRoute == "events" || currentRoute?.startsWith("event_detail") == true,
+                    onClick = {
+                        if (currentRoute != "events") {
+                            navController.navigate("events") {
+                                popUpTo("events") { inclusive = true }
                             }
-                        ) {
-                            Icon(Icons.Default.List, contentDescription = "Programs")
                         }
-                    },
-                    label = { Text("Programs") },
-                    selected = currentRoute == "programs",
-                    onClick = { navController.navigate("programs") }
+                    }
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.ExitToApp, contentDescription = "Logout") },
+                    icon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Logout") },
                     label = { Text("Logout") },
                     selected = currentRoute == "logout_screen",
                     onClick = { navController.navigate("logout_screen") }
@@ -108,22 +132,50 @@ fun ModeratorApp(onLogout: () -> Unit) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "events",
+            startDestination = "spots",
             modifier = Modifier.padding(innerPadding)
         ) {
-
-            composable("events") {
+            // Spots moderation
+            composable("spots") {
                 ModeratorSpotList(
                     onSpotClick = { spotId ->
-                        navController.navigate("detail/$spotId")
+                        navController.navigate("spot_detail/$spotId")
                     }
                 )
             }
-            composable("programs") {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Programs Feature Coming Soon")
-                }
+
+            composable(
+                route = "spot_detail/{spotId}",
+                arguments = listOf(navArgument("spotId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val spotId = backStackEntry.arguments?.getString("spotId") ?: ""
+                ModeratorSpotScreen(
+                    spotId = spotId,
+                    onBack = { navController.popBackStack() }
+                )
             }
+
+            // Events moderation
+            composable("events") {
+                ModeratorEventList(
+                    onEventClick = { eventId ->
+                        navController.navigate("event_detail/$eventId")
+                    }
+                )
+            }
+
+            composable(
+                route = "event_detail/{eventId}",
+                arguments = listOf(navArgument("eventId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
+                ModeratorEventScreen(
+                    eventId = eventId,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            // Logout screen
             composable("logout_screen") {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -147,17 +199,6 @@ fun ModeratorApp(onLogout: () -> Unit) {
                         Text("Confirm Logout")
                     }
                 }
-            }
-
-            composable(
-                route = "detail/{spotId}",
-                arguments = listOf(navArgument("spotId") { type = NavType.StringType })
-            ) { backStackEntry ->
-                val spotId = backStackEntry.arguments?.getString("spotId") ?: ""
-                ModeratorSpotScreen(
-                    spotId = spotId,
-                    onBack = { navController.popBackStack() }
-                )
             }
         }
     }
