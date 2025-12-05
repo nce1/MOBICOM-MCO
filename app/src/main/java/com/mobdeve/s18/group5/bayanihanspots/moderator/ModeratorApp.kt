@@ -1,7 +1,7 @@
 package com.mobdeve.s18.group5.bayanihanspots.moderator
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
@@ -38,6 +39,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.google.firebase.firestore.FirebaseFirestore
+import com.mobdeve.s18.group5.bayanihanspots.manage.events.AddEventScreen
+import com.mobdeve.s18.group5.bayanihanspots.manage.spots.AddSpotScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.moderator.ModeratorSpotScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -140,6 +143,9 @@ fun ModeratorApp(onLogout: () -> Unit) {
                 ModeratorSpotList(
                     onSpotClick = { spotId ->
                         navController.navigate("spot_detail/$spotId")
+                    },
+                    onAddSpotClick = {
+                        navController.navigate("add_spot")
                     }
                 )
             }
@@ -155,11 +161,26 @@ fun ModeratorApp(onLogout: () -> Unit) {
                 )
             }
 
+            // Add Spot (Moderator - auto-approved)
+            composable("add_spot") {
+                val context = LocalContext.current
+                ModeratorAddSpotScreen(
+                    onBack = { navController.popBackStack() },
+                    onSaveSuccess = {
+                        Toast.makeText(context, "Spot added successfully!", Toast.LENGTH_SHORT).show()
+                        navController.popBackStack()
+                    }
+                )
+            }
+
             // Events moderation
             composable("events") {
                 ModeratorEventList(
                     onEventClick = { eventId ->
                         navController.navigate("event_detail/$eventId")
+                    },
+                    onAddEventClick = {
+                        navController.navigate("add_event")
                     }
                 )
             }
@@ -172,6 +193,18 @@ fun ModeratorApp(onLogout: () -> Unit) {
                 ModeratorEventScreen(
                     eventId = eventId,
                     onBack = { navController.popBackStack() }
+                )
+            }
+
+            // Add Event (Moderator - auto-approved)
+            composable("add_event") {
+                val context = LocalContext.current
+                ModeratorAddEventScreen(
+                    onBack = { navController.popBackStack() },
+                    onSaveSuccess = {
+                        Toast.makeText(context, "Event added successfully!", Toast.LENGTH_SHORT).show()
+                        navController.popBackStack()
+                    }
                 )
             }
 
@@ -203,3 +236,35 @@ fun ModeratorApp(onLogout: () -> Unit) {
         }
     }
 }
+
+/**
+ * Wrapper for AddSpotScreen that auto-approves spots created by moderator
+ */
+@Composable
+fun ModeratorAddSpotScreen(
+    onBack: () -> Unit,
+    onSaveSuccess: () -> Unit
+) {
+    // Use the regular AddSpotScreen with moderator mode enabled
+    AddSpotScreen(
+        onBack = onBack,
+        onSaveSuccess = onSaveSuccess,
+        isModeratorMode = true
+    )
+}
+
+/**
+ * Wrapper for AddEventScreen that auto-approves events created by moderator
+ */
+@Composable
+fun ModeratorAddEventScreen(
+    onBack: () -> Unit,
+    onSaveSuccess: () -> Unit
+) {
+    AddEventScreen(
+        onBack = onBack,
+        onSaveSuccess = onSaveSuccess,
+        isModeratorMode = true
+    )
+}
+

@@ -6,6 +6,7 @@ import android.app.Application
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,20 +16,27 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.location.LocationServices
+import com.mobdeve.s18.group5.bayanihanspots.R
 import com.mobdeve.s18.group5.bayanihanspots.data.spots.Spot
 import com.mobdeve.s18.group5.bayanihanspots.spots.SpotDetailsDialog
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.PrimaryTeal
@@ -93,15 +101,6 @@ fun HomeScreen(
         }
     }
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Discover Spots", color = TextCharcoal) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = PrimaryTeal,
-                    titleContentColor = TextCharcoal
-                ), windowInsets = WindowInsets(0, 0, 0, 0)
-            )
-        },
         containerColor = SurfaceOffWhite
     ) { innerPadding ->
         when (val state = uiState) {
@@ -126,6 +125,78 @@ fun HomeScreen(
                         .fillMaxSize()
                         .padding(innerPadding)
                 ) {
+                    // Custom Header with Logo
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        PrimaryTeal,
+                                        PrimaryTeal.copy(alpha = 0.85f)
+                                    )
+                                )
+                            )
+                            .padding(horizontal = 20.dp, vertical = 16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                // Logo
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.White),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.logo),
+                                        contentDescription = "Bayanihan Spots Logo",
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column {
+                                    Text(
+                                        text = "Bayanihan Spots",
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "Discover community spaces",
+                                        fontSize = 12.sp,
+                                        color = Color.White.copy(alpha = 0.8f)
+                                    )
+                                }
+                            }
+
+                            // Explore Icon
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Explore,
+                                    contentDescription = "Explore",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                    }
+
                     // Search Bar
                     OutlinedTextField(
                         value = searchQuery,
@@ -141,12 +212,14 @@ fun HomeScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        shape = RoundedCornerShape(12.dp),
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        shape = RoundedCornerShape(16.dp),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White
+                            unfocusedContainerColor = Color.White,
+                            focusedBorderColor = PrimaryTeal,
+                            unfocusedBorderColor = SecondarySage
                         )
                     )
 

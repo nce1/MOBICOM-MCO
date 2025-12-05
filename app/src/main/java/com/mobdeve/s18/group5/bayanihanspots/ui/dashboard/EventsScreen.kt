@@ -1,17 +1,37 @@
 package com.mobdeve.s18.group5.bayanihanspots.ui.dashboard
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
 import com.mobdeve.s18.group5.bayanihanspots.manage.signups.formatScheduleTime
+import com.mobdeve.s18.group5.bayanihanspots.ui.theme.AccentCoral
+import com.mobdeve.s18.group5.bayanihanspots.ui.theme.PinNatureGreen
+import com.mobdeve.s18.group5.bayanihanspots.ui.theme.PrimaryTeal
+import com.mobdeve.s18.group5.bayanihanspots.ui.theme.SecondarySage
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.SurfaceOffWhite
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.TextCharcoal
 
@@ -41,10 +61,19 @@ private fun EventsLoading() {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(SurfaceOffWhite)
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator()
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator(color = PrimaryTeal)
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                "Loading events...",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextCharcoal.copy(alpha = 0.6f)
+            )
+        }
     }
 }
 
@@ -53,13 +82,46 @@ private fun EventsError(message: String, onRetry: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .background(SurfaceOffWhite)
+            .padding(32.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = message, color = TextCharcoal)
-        Spacer(modifier = Modifier.height(12.dp))
-        Button(onClick = onRetry) { Text("Retry") }
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+                .background(AccentCoral.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Default.Error,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = AccentCoral
+            )
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "Oops! Something went wrong",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = TextCharcoal
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextCharcoal.copy(alpha = 0.6f)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(
+            onClick = onRetry,
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryTeal),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text("Try Again")
+        }
     }
 }
 
@@ -74,58 +136,308 @@ private fun EventsList(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .background(SurfaceOffWhite),
+        contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Header Section
         item {
             Column(modifier = Modifier.fillMaxWidth()) {
-                Text("Programs & Events", style = MaterialTheme.typography.headlineSmall, color = TextCharcoal)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(SecondarySage),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.VolunteerActivism,
+                            contentDescription = null,
+                            tint = PrimaryTeal,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            "Programs & Events",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = TextCharcoal
+                        )
+                        Text(
+                            "${events.size} upcoming opportunities",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextCharcoal.copy(alpha = 0.6f)
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Volunteer with nearby barangays, gardens, and pop-ups.", style = MaterialTheme.typography.bodyMedium, color = TextCharcoal)
+                Text(
+                    "Volunteer with nearby barangays, gardens, and community programs.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextCharcoal.copy(alpha = 0.7f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(color = SecondarySage, thickness = 1.dp)
             }
         }
+
+        // Event Cards
         items(events) { event ->
             Log.d("EVENTS", "Max: "+ event.maxVolunteers)
             Log.d("EVENTS", "Curr: "+ event.currentVolunteers)
             val max = event.maxVolunteers ?: 0
-            val current = event.currentVolunteers
-            val isFull = max > 0 && current!! >= max
+            val current = event.currentVolunteers ?: 0
+            val isFull = max > 0 && current >= max
             val isJoined = joinedEventIds.contains(event.id)
-            val isButtonEnabled = !isJoined && !isFull
-            val buttonText = when {
-                isJoined -> "Joined"
-                isFull -> "Full"
-                !isLoggedIn -> "Login to RSVP"
-                else -> "Join"
-            }
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = SurfaceOffWhite),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(event.title, style = MaterialTheme.typography.titleMedium, color = TextCharcoal, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("${formatScheduleTime(event.schedule)} • ${event.locationLabel}", color = TextCharcoal)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(event.description, style = MaterialTheme.typography.bodyMedium, color = TextCharcoal)
-                    Spacer(modifier = Modifier.height(12.dp))
 
-                    Button(
-                        onClick = {
-                            if (isLoggedIn) {
-                                onJoinEvent(event.id)
-                            } else {
-                                onLoginClick()
-                            }
-                        },
-                        enabled = isButtonEnabled,
-                        modifier = Modifier.align(Alignment.End)
-                    ){
-                        Text(buttonText)
+            EventCard(
+                event = event,
+                currentVolunteers = current,
+                maxVolunteers = max,
+                isJoined = isJoined,
+                isFull = isFull,
+                isLoggedIn = isLoggedIn,
+                onJoinClick = {
+                    if (isLoggedIn) onJoinEvent(event.id) else onLoginClick()
+                }
+            )
+        }
+
+        // Footer spacing
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun EventCard(
+    event: Event,
+    currentVolunteers: Int,
+    maxVolunteers: Int,
+    isJoined: Boolean,
+    isFull: Boolean,
+    isLoggedIn: Boolean,
+    onJoinClick: () -> Unit
+) {
+    val buttonText = when {
+        isJoined -> "Joined"
+        isFull -> "Full"
+        !isLoggedIn -> "Login to Join"
+        else -> "Join Event"
+    }
+    val isButtonEnabled = !isJoined && !isFull
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Title Row with Event Icon
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SecondarySage),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Event,
+                        contentDescription = null,
+                        tint = PrimaryTeal,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        event.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = TextCharcoal,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (isJoined) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = PinNatureGreen,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                "You're signed up!",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = PinNatureGreen,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Info Pills Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Date/Time Pill
+                InfoPill(
+                    icon = Icons.Default.CalendarMonth,
+                    text = formatScheduleTime(event.schedule),
+                    modifier = Modifier.weight(1f)
+                )
+                // Location Pill
+                InfoPill(
+                    icon = Icons.Default.LocationOn,
+                    text = event.locationLabel,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Description
+            Text(
+                event.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextCharcoal.copy(alpha = 0.7f),
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            // Volunteer Progress (if max is set)
+            if (maxVolunteers > 0) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        Icons.Default.Groups,
+                        contentDescription = null,
+                        tint = if (isFull) AccentCoral else PrimaryTeal,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "$currentVolunteers / $maxVolunteers volunteers",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (isFull) AccentCoral else TextCharcoal.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Progress Bar
+                val progress = if (maxVolunteers > 0) currentVolunteers.toFloat() / maxVolunteers else 0f
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = if (isFull) AccentCoral else PrimaryTeal,
+                    trackColor = SecondarySage.copy(alpha = 0.5f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Action Button
+            Button(
+                onClick = onJoinClick,
+                enabled = isButtonEnabled,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = when {
+                        isJoined -> PinNatureGreen
+                        isFull -> TextCharcoal.copy(alpha = 0.3f)
+                        else -> PrimaryTeal
+                    },
+                    disabledContainerColor = when {
+                        isJoined -> PinNatureGreen.copy(alpha = 0.7f)
+                        else -> TextCharcoal.copy(alpha = 0.2f)
+                    },
+                    disabledContentColor = Color.White
+                ),
+                contentPadding = PaddingValues(vertical = 14.dp)
+            ) {
+                if (!isLoggedIn && !isJoined && !isFull) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Login,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                } else if (!isJoined && !isFull) {
+                    Icon(
+                        Icons.Default.PersonAdd,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text(
+                    buttonText,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun InfoPill(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        color = SecondarySage.copy(alpha = 0.4f),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = PrimaryTeal,
+                modifier = Modifier.size(14.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text,
+                style = MaterialTheme.typography.labelSmall,
+                color = TextCharcoal,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }

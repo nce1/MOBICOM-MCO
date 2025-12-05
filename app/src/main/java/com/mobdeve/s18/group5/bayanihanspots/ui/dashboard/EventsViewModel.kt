@@ -1,12 +1,14 @@
 package com.mobdeve.s18.group5.bayanihanspots.ui.dashboard
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
 import com.mobdeve.s18.group5.bayanihanspots.data.repository.OfflineFirstEventRepository
+import com.mobdeve.s18.group5.bayanihanspots.notifications.EventReminderManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,12 +27,17 @@ sealed interface EventsUiState {
  * UI always reads from Room (single source of truth).
  * Firestore syncs in the background.
  */
-class EventsViewModel(private val repository: OfflineFirstEventRepository) : ViewModel() {
+class EventsViewModel(
+    private val repository: OfflineFirstEventRepository,
+    private val application: Application
+) : ViewModel() {
     private val _uiState = MutableStateFlow<EventsUiState>(EventsUiState.Loading)
     private var joinedIds = emptySet<String>()
     val uiState: StateFlow<EventsUiState> = _uiState.asStateFlow()
 
     init {
+        // Create notification channel on init
+        EventReminderManager.createNotificationChannel(application)
         observeEvents()
         // Start real-time sync from Firestore to Room
         repository.startRealtimeSync()
@@ -83,10 +90,32 @@ class EventsViewModel(private val repository: OfflineFirstEventRepository) : Vie
                     userId = user.uid,
                     userEmail = user.email ?: ""
                 )
-                if (result.isFailure) {
-                    println("Join failed: ${result.exceptionOrNull()?.message}")
+                if (result.isSuccess) {
+                    // Schedule reminders for this event
+                    scheduleEventReminders(event)
+                    Log.d("EventsViewModel", "Successfully joined event and scheduled reminders")
+                } else {
+                    Log.e("EventsViewModel", "Join failed: ${result.exceptionOrNull()?.message}")
                 }
             }
+        }
+    }
+
+    /**
+     * Schedule notification reminders for an event
+     */
+    private fun scheduleEventReminders(event: Event) {
+        val eventTimeMillis = event.scheduleUtcMillis
+        if (eventTimeMillis != null && eventTimeMillis > System.currentTimeMillis()) {
+            EventReminderManager.scheduleEventReminders(
+                context = application,
+                eventId = event.id,
+                eventTitle = event.title,
+                eventTimeMillis = eventTimeMillis
+            )
+            Log.d("EventsViewModel", "Scheduled reminders for event: ${event.title} at $eventTimeMillis")
+        } else {
+            Log.w("EventsViewModel", "Cannot schedule reminders: event time is null or in the past")
         }
     }
 }
@@ -97,13 +126,12 @@ class EventsViewModel(private val repository: OfflineFirstEventRepository) : Vie
 class EventsViewModelFactory(private val application: Application? = null) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(EventsViewModel::class.java)) {
-            val repository = if (application != null) {
-                OfflineFirstEventRepository.getInstance(application)
-            } else {
+            if (application == null) {
                 throw IllegalStateException("Application context required for offline-first mode. Use EventsViewModelFactory(application).")
             }
+            val repository = OfflineFirstEventRepository.getInstance(application)
             @Suppress("UNCHECKED_CAST")
-            return EventsViewModel(repository) as T
+            return EventsViewModel(repository, application) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -40,6 +40,7 @@ fun ProfileScreen(
     onLogout: () -> Unit,
     onNotificationsClick: () -> Unit,
     onManageSpotsClick: () -> Unit,
+    onManageEventsClick: () -> Unit,
     onManageSignUpsClick: () -> Unit
 ) {
     val user: LoggedInUser? by viewModel.profile.observeAsState(null)
@@ -121,7 +122,7 @@ fun ProfileScreen(
                     icon = Icons.Default.DateRange,
                     title = "Manage Programs",
                     subtitle = "Add, Edit",
-                    onClick = { /* TODO: Add Manage Events Nav */ }
+                    onClick = onManageEventsClick
                 )
 
                 Divider(modifier = Modifier.padding(start = 40.dp, top = 4.dp, bottom = 4.dp), color = Color(0xFFF0F0F0))

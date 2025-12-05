@@ -44,12 +44,17 @@ import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.OnMapsSdkInitializedCallback
 import com.mobdeve.s18.group5.bayanihanspots.auth.ui.login.ForgotPasswordScreen
 import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
+import com.mobdeve.s18.group5.bayanihanspots.manage.events.AddEventScreen
+import com.mobdeve.s18.group5.bayanihanspots.manage.events.EditEventScreen
+import com.mobdeve.s18.group5.bayanihanspots.manage.events.ManageEventsScreen
+import com.mobdeve.s18.group5.bayanihanspots.manage.events.ManageEventsViewModel
 import com.mobdeve.s18.group5.bayanihanspots.manage.signups.ManageSignupsScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.AddSpotScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.EditSpotScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.ManageSpotsScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.ManageSpotsViewModel
 import com.mobdeve.s18.group5.bayanihanspots.moderator.ModeratorApp
+import com.mobdeve.s18.group5.bayanihanspots.notifications.EventReminderManager
 import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsUiState
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModelFactory
@@ -64,6 +69,9 @@ class MainActivity : ComponentActivity(), OnMapsSdkInitializedCallback {
 
         // Initialize WorkManager for pending uploads (offline-first sync)
         initializeOfflineSync()
+
+        // Initialize notification channel for event reminders
+        EventReminderManager.createNotificationChannel(applicationContext)
 
         try {
             MapsInitializer.initialize(applicationContext, MapsInitializer.Renderer.LEGACY, this)
@@ -125,6 +133,7 @@ fun MainApp(auth: FirebaseAuth, application: Application){
     val navController = rememberNavController()
     val isLoggedIn by rememberAuthState(auth)
     val manageSpotsViewModel: ManageSpotsViewModel = viewModel()
+    val manageEventsViewModel: ManageEventsViewModel = viewModel()
     Scaffold(bottomBar = { BottomNavBar(navController, isLoggedIn) })
     { innerPadding ->
         NavHost(
@@ -177,6 +186,7 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                         }
                     },
                     onManageSpotsClick = {navController.navigate("manage_spots")},
+                    onManageEventsClick = {navController.navigate("manage_events")},
                     onManageSignUpsClick = {navController.navigate("manage_signups")},
                     onNotificationsClick = {navController.navigate("notifications")}
                 )
@@ -277,6 +287,62 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                 ManageSignupsScreen(
                     onBack = { navController.popBackStack() }
                 )
+            }
+            // Manage Events (Programs)
+            composable("manage_events"){
+                val context = LocalContext.current
+                LaunchedEffect(Unit){ manageEventsViewModel.fetchUserEvents() }
+                ManageEventsScreen(
+                    events = manageEventsViewModel.myEvents,
+                    isLoading = manageEventsViewModel.isLoading,
+                    onBack = { navController.popBackStack() },
+                    onAddEvent = { navController.navigate("add_event") },
+                    onEditEvent = { eventId -> navController.navigate("edit_event/$eventId") },
+                    onDeleteEvent = { eventId ->
+                        manageEventsViewModel.deleteEvent(
+                            eventId = eventId,
+                            onSuccess = {
+                                android.widget.Toast.makeText(context, "Program deleted successfully", android.widget.Toast.LENGTH_SHORT).show()
+                            },
+                            onFailure = { e ->
+                                android.widget.Toast.makeText(context, "Failed to delete: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+                )
+            }
+            // Add Event
+            composable("add_event") {
+                AddEventScreen(
+                    onBack = { navController.popBackStack() },
+                    onSaveSuccess = {
+                        manageEventsViewModel.fetchUserEvents()
+                        navController.popBackStack()
+                    }
+                )
+            }
+            // Edit Event
+            composable(
+                route = "edit_event/{eventId}",
+                arguments = listOf(navArgument("eventId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
+                val event = manageEventsViewModel.getEventById(eventId)
+                if (event != null) {
+                    EditEventScreen(
+                        event = event,
+                        onBack = { navController.popBackStack() },
+                        onSaveSuccess = {
+                            manageEventsViewModel.fetchUserEvents()
+                            navController.popBackStack()
+                        }
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                        LaunchedEffect(Unit) { navController.popBackStack() }
+                    }
+                }
             }
         }
     }

@@ -64,7 +64,11 @@ import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
+fun AddSpotScreen(
+    onBack: () -> Unit,
+    onSaveSuccess: () -> Unit,
+    isModeratorMode: Boolean = false
+){
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
@@ -266,21 +270,23 @@ fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
                         }
                         isUploading = true
                         uploadImagesToFirebase(storage, selectedImages) { imageUrls ->
-                            val newSpot = Spot(
-                                id = "",
-                                name = name,
-                                type = type,
-                                crowdLevel = crowdLevel,
-                                description = description,
-                                status = "OPEN",
-                                userID = auth.currentUser?.uid ?: "Anonymous",
-                                coordinates = GeoPoint(selectedLocation.latitude, selectedLocation.longitude),
-                                imageList = imageUrls
+                            val spotData = hashMapOf(
+                                "name" to name,
+                                "type" to type,
+                                "crowdLevel" to crowdLevel,
+                                "description" to description,
+                                "status" to "OPEN",
+                                "userID" to (auth.currentUser?.uid ?: "Anonymous"),
+                                "coordinates" to GeoPoint(selectedLocation.latitude, selectedLocation.longitude),
+                                "imageList" to imageUrls,
+                                "approvalStatus" to if (isModeratorMode) "APPROVED" else "PENDING",
+                                "modificationType" to "NEW"
                             )
-                            firestore.collection("spots").add(newSpot)
+                            firestore.collection("spots").add(spotData)
                                 .addOnSuccessListener{
                                     isUploading = false
-                                    Toast.makeText(context, "Spot submitted!", Toast.LENGTH_LONG).show()
+                                    val message = if (isModeratorMode) "Spot added!" else "Spot submitted for review!"
+                                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                                     onSaveSuccess()
                                 }.addOnFailureListener{
                                     isUploading = false
@@ -291,7 +297,7 @@ fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
                     enabled = !isUploading,
                     modifier = Modifier.weight(1f).height(50.dp)
                 ){
-                    if (isUploading) Text("Uploading...") else Text("Submit Spot")
+                    if (isUploading) Text("Uploading...") else Text(if (isModeratorMode) "Add Spot" else "Submit Spot")
                 }
             }
             Spacer(modifier = Modifier.height(50.dp))
