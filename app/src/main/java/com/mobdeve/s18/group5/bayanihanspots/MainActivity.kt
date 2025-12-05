@@ -29,7 +29,6 @@ import com.mobdeve.s18.group5.bayanihanspots.auth.ui.signup.SignupScreen
 import com.mobdeve.s18.group5.bayanihanspots.auth.ui.signup.SignupViewModel
 import com.mobdeve.s18.group5.bayanihanspots.auth.ui.signup.SignupViewModelFactory
 import com.mobdeve.s18.group5.bayanihanspots.data.sync.PendingUploadManager
-import com.mobdeve.s18.group5.bayanihanspots.notifications.NotificationHelper
 import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsViewModelFactory
@@ -38,23 +37,18 @@ import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileViewModelFactory
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.BayanihanSpotsTheme
-import com.mobdeve.s18.group5.bayanihanspots.workers.WorkManagerHelper
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.OnMapsSdkInitializedCallback
+import com.mobdeve.s18.group5.bayanihanspots.auth.ui.login.ForgotPasswordScreen
 import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
 import com.mobdeve.s18.group5.bayanihanspots.manage.signups.ManageSignupsScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.AddSpotScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.EditSpotScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.ManageSpotsScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.ManageSpotsViewModel
-import com.mobdeve.s18.group5.bayanihanspots.manage.programs.AddProgramScreen
-import com.mobdeve.s18.group5.bayanihanspots.manage.programs.EditProgramScreen
-import com.mobdeve.s18.group5.bayanihanspots.manage.programs.ManageProgramsScreen
-import com.mobdeve.s18.group5.bayanihanspots.manage.programs.ManageProgramsViewModel
-import com.mobdeve.s18.group5.bayanihanspots.manage.signups.ManageSignupsScreen
 import com.mobdeve.s18.group5.bayanihanspots.moderator.ModeratorApp
 import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsUiState
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModel
@@ -68,14 +62,8 @@ class MainActivity : ComponentActivity(), OnMapsSdkInitializedCallback {
         super.onCreate(savedInstanceState)
         auth = Firebase.auth
 
-        // Initialize notification channels
-        NotificationHelper.createNotificationChannels(this)
-
         // Initialize WorkManager for pending uploads (offline-first sync)
         initializeOfflineSync()
-
-        // Schedule periodic background sync
-        WorkManagerHelper.schedulePeriodicSync(this)
 
         try {
             MapsInitializer.initialize(applicationContext, MapsInitializer.Renderer.LEGACY, this)
@@ -137,7 +125,6 @@ fun MainApp(auth: FirebaseAuth, application: Application){
     val navController = rememberNavController()
     val isLoggedIn by rememberAuthState(auth)
     val manageSpotsViewModel: ManageSpotsViewModel = viewModel()
-    val manageProgramsViewModel: ManageProgramsViewModel = viewModel()
     Scaffold(bottomBar = { BottomNavBar(navController, isLoggedIn) })
     { innerPadding ->
         NavHost(
@@ -166,32 +153,17 @@ fun MainApp(auth: FirebaseAuth, application: Application){
             composable("events") {
                 val viewModel: EventsViewModel = viewModel(factory = EventsViewModelFactory(application))
                 val state by viewModel.uiState.collectAsState()
-                val actionResult by viewModel.actionResult.collectAsState()
                 EventsScreen(
                     state = state,
                     onRefresh = { viewModel.refresh() },
                     isLoggedIn = isLoggedIn,
                     onLoginClick = { navController.navigate("login") },
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                     onJoinEvent = { eventId ->
                         val event = (state as? EventsUiState.Success)?.events?.find { it.id == eventId }
                         if (event != null){
                             viewModel.joinEvent(event)
                         }
                     }
-=======
-=======
->>>>>>> Stashed changes
-                    onJoinEvent = { event -> viewModel.joinEvent(event) },
-                    onLeaveEvent = { eventId -> viewModel.leaveEvent(eventId) },
-                    onToggleFavorite = { event -> viewModel.toggleFavorite(event) },
-                    actionResult = actionResult,
-                    onClearActionResult = { viewModel.clearActionResult() }
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                 )
             }
             composable("profile"){
@@ -204,20 +176,9 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                             launchSingleTop = true
                         }
                     },
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                     onManageSpotsClick = {navController.navigate("manage_spots")},
-                    onManageSignUpsClick = {navController.navigate("manage_signups")}
-=======
-                    onManageSpotsClick = { navController.navigate("manage_spots") },
-                    onManageProgramsClick = { navController.navigate("manage_programs") },
-                    onManageSignupsClick = { navController.navigate("manage_signups") }
->>>>>>> Stashed changes
-=======
-                    onManageSpotsClick = { navController.navigate("manage_spots") },
-                    onManageProgramsClick = { navController.navigate("manage_programs") },
-                    onManageSignupsClick = { navController.navigate("manage_signups") }
->>>>>>> Stashed changes
+                    onManageSignUpsClick = {navController.navigate("manage_signups")},
+                    onNotificationsClick = {navController.navigate("notifications")}
                 )
             }
             // Auth Area
@@ -250,7 +211,13 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                             }
                         }
                     },
-                    onSignupClick = { navController.navigate("signup") }
+                    onSignupClick = { navController.navigate("signup") },
+                    onForgotPasswordClick = { navController.navigate("forgot_password") }
+                )
+            }
+            composable("forgot_password") {
+                ForgotPasswordScreen(
+                    onBack = { navController.popBackStack() }
                 )
             }
             composable("notifications"){
@@ -305,78 +272,12 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                     }
                 }
             }
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             // Manage Sign ups
             composable("manage_signups"){
                 ManageSignupsScreen(
                     onBack = { navController.popBackStack() }
                 )
             }
-=======
-=======
->>>>>>> Stashed changes
-
-            // Manage Programs Area
-            composable("manage_programs") {
-                val context = LocalContext.current
-                LaunchedEffect(Unit) { manageProgramsViewModel.fetchUserPrograms() }
-                ManageProgramsScreen(
-                    programs = manageProgramsViewModel.myPrograms,
-                    isLoading = manageProgramsViewModel.isLoading,
-                    onBack = { navController.popBackStack() },
-                    onAddProgram = { navController.navigate("add_program") },
-                    onEditProgram = { programId -> navController.navigate("edit_program/$programId") },
-                    onDeleteProgram = { programId ->
-                        manageProgramsViewModel.deleteProgram(
-                            programId = programId,
-                            onSuccess = {
-                                android.widget.Toast.makeText(context, "Program deleted successfully", android.widget.Toast.LENGTH_SHORT).show()
-                            },
-                            onFailure = { e ->
-                                android.widget.Toast.makeText(context, "Failed to delete: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-                            }
-                        )
-                    }
-                )
-            }
-            composable("add_program") {
-                AddProgramScreen(
-                    onBack = { navController.popBackStack() },
-                    onSaveSuccess = {
-                        manageProgramsViewModel.refreshPrograms()
-                        navController.popBackStack()
-                    }
-                )
-            }
-            composable(route = "edit_program/{programId}", arguments = listOf(navArgument("programId") { type = NavType.StringType })) { backStackEntry ->
-                val programId = backStackEntry.arguments?.getString("programId") ?: ""
-                val program = manageProgramsViewModel.getProgramById(programId)
-                if (program != null) {
-                    EditProgramScreen(
-                        program = program,
-                        onBack = { navController.popBackStack() },
-                        onSaveSuccess = {
-                            manageProgramsViewModel.refreshPrograms()
-                            navController.popBackStack()
-                        }
-                    )
-                } else {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                        LaunchedEffect(Unit) { navController.popBackStack() }
-                    }
-                }
-            }
-
-            // Manage Signups Area
-            composable("manage_signups") {
-                ManageSignupsScreen(onBack = { navController.popBackStack() })
-            }
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         }
     }
 }
