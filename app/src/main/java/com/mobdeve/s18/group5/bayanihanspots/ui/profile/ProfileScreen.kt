@@ -25,7 +25,13 @@ import com.mobdeve.s18.group5.bayanihanspots.R
 import com.mobdeve.s18.group5.bayanihanspots.auth.data.model.LoggedInUser
 
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel, onLogout: () -> Unit, onManageSpotsClick: () -> Unit, onManageSignUpsClick: () -> Unit){
+fun ProfileScreen(
+    viewModel: ProfileViewModel,
+    onLogout: () -> Unit,
+    onManageSpotsClick: () -> Unit,
+    onManageProgramsClick: () -> Unit,
+    onManageSignupsClick: () -> Unit
+){
     val user: LoggedInUser? by viewModel.profile.observeAsState(null)
     val completedCount by viewModel.completedCount.observeAsState("00")
     val activeCount by viewModel.activeCount.observeAsState("00")
@@ -120,14 +126,14 @@ fun ProfileScreen(viewModel: ProfileViewModel, onLogout: () -> Unit, onManageSpo
                     icon = R.drawable.ic_home_black_24dp,
                     title = "Manage Programs",
                     subtitle = "Add, Edit",
-                    onClick = { /*  */ }
+                    onClick = onManageProgramsClick
                 )
                 Divider(modifier = Modifier.padding(start = 40.dp, top = 4.dp, bottom = 4.dp), color = Color(0xFFF0F0F0))
                 ProfileRow(
                     icon = R.drawable.ic_home_black_24dp,
                     title = "Manage Signups",
                     subtitle = "Edit, Cancel",
-                    onClick = onManageSignUpsClick
+                    onClick = onManageSignupsClick
                 )
             }
         }

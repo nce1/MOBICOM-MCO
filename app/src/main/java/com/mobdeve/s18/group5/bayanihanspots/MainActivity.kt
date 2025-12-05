@@ -48,6 +48,10 @@ import com.mobdeve.s18.group5.bayanihanspots.manage.spots.AddSpotScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.EditSpotScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.ManageSpotsScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.ManageSpotsViewModel
+import com.mobdeve.s18.group5.bayanihanspots.manage.programs.AddProgramScreen
+import com.mobdeve.s18.group5.bayanihanspots.manage.programs.EditProgramScreen
+import com.mobdeve.s18.group5.bayanihanspots.manage.programs.ManageProgramsScreen
+import com.mobdeve.s18.group5.bayanihanspots.manage.programs.ManageProgramsViewModel
 import com.mobdeve.s18.group5.bayanihanspots.moderator.ModeratorApp
 import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsUiState
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModel
@@ -124,6 +128,7 @@ fun MainApp(auth: FirebaseAuth, application: Application){
     val navController = rememberNavController()
     val isLoggedIn by rememberAuthState(auth)
     val manageSpotsViewModel: ManageSpotsViewModel = viewModel()
+    val manageProgramsViewModel: ManageProgramsViewModel = viewModel()
     Scaffold(bottomBar = { BottomNavBar(navController, isLoggedIn) })
     { innerPadding ->
         NavHost(
@@ -175,8 +180,9 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                             launchSingleTop = true
                         }
                     },
-                    onManageSpotsClick = {navController.navigate("manage_spots")},
-                    onManageSignUpsClick = {navController.navigate("manage_signups")}
+                    onManageSpotsClick = { navController.navigate("manage_spots") },
+                    onManageProgramsClick = { navController.navigate("manage_programs") },
+                    onManageSignupsClick = { navController.navigate("manage_signups") }
                 )
             }
             // Auth Area
@@ -258,6 +264,57 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                             navController.popBackStack() }
                     )
                 } else{
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                        LaunchedEffect(Unit) { navController.popBackStack() }
+                    }
+                }
+            }
+            // Manage Programs Area
+            composable("manage_programs") {
+                val context = LocalContext.current
+                LaunchedEffect(Unit) { manageProgramsViewModel.fetchUserPrograms() }
+                ManageProgramsScreen(
+                    programs = manageProgramsViewModel.myPrograms,
+                    isLoading = manageProgramsViewModel.isLoading,
+                    onBack = { navController.popBackStack() },
+                    onAddProgram = { navController.navigate("add_program") },
+                    onEditProgram = { programId -> navController.navigate("edit_program/$programId") },
+                    onDeleteProgram = { programId ->
+                        manageProgramsViewModel.deleteProgram(
+                            programId = programId,
+                            onSuccess = {
+                                android.widget.Toast.makeText(context, "Program deleted successfully", android.widget.Toast.LENGTH_SHORT).show()
+                            },
+                            onFailure = { e ->
+                                android.widget.Toast.makeText(context, "Failed to delete: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+                )
+            }
+            composable("add_program") {
+                AddProgramScreen(
+                    onBack = { navController.popBackStack() },
+                    onSaveSuccess = {
+                        manageProgramsViewModel.refreshPrograms()
+                        navController.popBackStack()
+                    }
+                )
+            }
+            composable(route = "edit_program/{programId}", arguments = listOf(navArgument("programId") { type = NavType.StringType })) { backStackEntry ->
+                val programId = backStackEntry.arguments?.getString("programId") ?: ""
+                val program = manageProgramsViewModel.getProgramById(programId)
+                if (program != null) {
+                    EditProgramScreen(
+                        program = program,
+                        onBack = { navController.popBackStack() },
+                        onSaveSuccess = {
+                            manageProgramsViewModel.refreshPrograms()
+                            navController.popBackStack()
+                        }
+                    )
+                } else {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                         LaunchedEffect(Unit) { navController.popBackStack() }
