@@ -26,8 +26,11 @@ import com.mobdeve.s18.group5.bayanihanspots.auth.data.model.LoggedInUser
 
 @Composable
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 fun ProfileScreen(viewModel: ProfileViewModel, onLogout: () -> Unit, onManageSpotsClick: () -> Unit, onManageSignUpsClick: () -> Unit){
 =======
+=======
+>>>>>>> Stashed changes
 fun ProfileScreen(
     viewModel: ProfileViewModel,
     onLogout: () -> Unit,
@@ -35,6 +38,9 @@ fun ProfileScreen(
     onManageProgramsClick: () -> Unit,
     onManageSignupsClick: () -> Unit
 ){
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     val user: LoggedInUser? by viewModel.profile.observeAsState(null)
     val completedCount by viewModel.completedCount.observeAsState("00")
@@ -138,7 +144,11 @@ fun ProfileScreen(
                     title = "Manage Signups",
                     subtitle = "Edit, Cancel",
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                     onClick = onManageSignUpsClick
+=======
+                    onClick = onManageSignupsClick
+>>>>>>> Stashed changes
 =======
                     onClick = onManageSignupsClick
 >>>>>>> Stashed changes

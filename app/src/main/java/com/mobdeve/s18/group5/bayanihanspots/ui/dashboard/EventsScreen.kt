@@ -1,7 +1,11 @@
 package com.mobdeve.s18.group5.bayanihanspots.ui.dashboard
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import android.util.Log
+=======
+import android.widget.Toast
+>>>>>>> Stashed changes
 =======
 import android.widget.Toast
 >>>>>>> Stashed changes
@@ -21,10 +25,20 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
 import com.mobdeve.s18.group5.bayanihanspots.manage.signups.formatScheduleTime
+=======
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
+import com.mobdeve.s18.group5.bayanihanspots.ui.theme.PrimaryTeal
+import com.mobdeve.s18.group5.bayanihanspots.ui.theme.SecondarySage
+>>>>>>> Stashed changes
 =======
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -44,13 +58,19 @@ fun EventsScreen(
     isLoggedIn: Boolean,
     onLoginClick: () -> Unit,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     onJoinEvent: (String) -> Unit
 =======
+=======
+>>>>>>> Stashed changes
     onJoinEvent: (Event) -> Unit = {},
     onLeaveEvent: (String) -> Unit = {},
     onToggleFavorite: (Event) -> Unit = {},
     actionResult: ActionResult? = null,
     onClearActionResult: () -> Unit = {}
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 ) {
     val context = LocalContext.current
@@ -115,7 +135,11 @@ private fun EventsList(
     events: List<Event>,
     joinedEventIds: Set<String>,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     isLoggedIn: Boolean,
+=======
+    favoriteEventIds: Set<String>,
+>>>>>>> Stashed changes
 =======
     favoriteEventIds: Set<String>,
 >>>>>>> Stashed changes
@@ -226,11 +250,15 @@ private fun EventCard(
         Column(modifier = Modifier.padding(16.dp)) {
             // Header with title and favorite button
             Row(
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(event.title, style = MaterialTheme.typography.titleMedium, color = TextCharcoal, fontWeight = FontWeight.Bold)
@@ -253,6 +281,8 @@ private fun EventCard(
                     ){
                         Text(buttonText)
 =======
+=======
+>>>>>>> Stashed changes
                 Text(
                     text = event.title,
                     style = MaterialTheme.typography.titleMedium,
@@ -444,6 +474,9 @@ private fun EventCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Join & Get Reminders")
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                     }
                 }

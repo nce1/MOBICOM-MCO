@@ -173,6 +173,7 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                     isLoggedIn = isLoggedIn,
                     onLoginClick = { navController.navigate("login") },
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                     onJoinEvent = { eventId ->
                         val event = (state as? EventsUiState.Success)?.events?.find { it.id == eventId }
                         if (event != null){
@@ -180,11 +181,16 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                         }
                     }
 =======
+=======
+>>>>>>> Stashed changes
                     onJoinEvent = { event -> viewModel.joinEvent(event) },
                     onLeaveEvent = { eventId -> viewModel.leaveEvent(eventId) },
                     onToggleFavorite = { event -> viewModel.toggleFavorite(event) },
                     actionResult = actionResult,
                     onClearActionResult = { viewModel.clearActionResult() }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                 )
             }
@@ -199,8 +205,14 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                         }
                     },
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                     onManageSpotsClick = {navController.navigate("manage_spots")},
                     onManageSignUpsClick = {navController.navigate("manage_signups")}
+=======
+                    onManageSpotsClick = { navController.navigate("manage_spots") },
+                    onManageProgramsClick = { navController.navigate("manage_programs") },
+                    onManageSignupsClick = { navController.navigate("manage_signups") }
+>>>>>>> Stashed changes
 =======
                     onManageSpotsClick = { navController.navigate("manage_spots") },
                     onManageProgramsClick = { navController.navigate("manage_programs") },
@@ -294,6 +306,7 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                 }
             }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             // Manage Sign ups
             composable("manage_signups"){
                 ManageSignupsScreen(
@@ -301,6 +314,8 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                 )
             }
 =======
+=======
+>>>>>>> Stashed changes
 
             // Manage Programs Area
             composable("manage_programs") {
@@ -358,6 +373,9 @@ fun MainApp(auth: FirebaseAuth, application: Application){
             composable("manage_signups") {
                 ManageSignupsScreen(onBack = { navController.popBackStack() })
             }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         }
     }
