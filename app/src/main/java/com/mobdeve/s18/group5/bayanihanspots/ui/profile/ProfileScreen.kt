@@ -25,7 +25,7 @@ import com.mobdeve.s18.group5.bayanihanspots.R
 import com.mobdeve.s18.group5.bayanihanspots.auth.data.model.LoggedInUser
 
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel, onLogout: () -> Unit, onManageSpotsClick: () -> Unit){
+fun ProfileScreen(viewModel: ProfileViewModel, onLogout: () -> Unit, onManageSpotsClick: () -> Unit, onManageSignUpsClick: () -> Unit){
     val user: LoggedInUser? by viewModel.profile.observeAsState(null)
     val completedCount by viewModel.completedCount.observeAsState("00")
     val activeCount by viewModel.activeCount.observeAsState("00")
@@ -127,7 +127,7 @@ fun ProfileScreen(viewModel: ProfileViewModel, onLogout: () -> Unit, onManageSpo
                     icon = R.drawable.ic_home_black_24dp,
                     title = "Manage Signups",
                     subtitle = "Edit, Cancel",
-                    onClick = { /*  */ }
+                    onClick = onManageSignUpsClick
                 )
             }
         }
@@ -170,7 +170,7 @@ fun ProfileRow(icon: Int, title: String, subtitle: String, onClick: () -> Unit){
             painter = painterResource(id = icon),
             contentDescription = null,
             modifier = Modifier.size(24.dp),
-            tint = Color.Gray // Tint for your house icon
+            tint = Color.Gray
         )
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {

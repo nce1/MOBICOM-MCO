@@ -42,11 +42,14 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.OnMapsSdkInitializedCallback
+import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
+import com.mobdeve.s18.group5.bayanihanspots.manage.signups.ManageSignupsScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.AddSpotScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.EditSpotScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.ManageSpotsScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.ManageSpotsViewModel
 import com.mobdeve.s18.group5.bayanihanspots.moderator.ModeratorApp
+import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsUiState
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModelFactory
 import com.mobdeve.s18.group5.bayanihanspots.ui.notifications.NotificationScreen
@@ -153,7 +156,13 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                     state = state,
                     onRefresh = { viewModel.refresh() },
                     isLoggedIn = isLoggedIn,
-                    onLoginClick = { navController.navigate("login") }
+                    onLoginClick = { navController.navigate("login") },
+                    onJoinEvent = { eventId ->
+                        val event = (state as? EventsUiState.Success)?.events?.find { it.id == eventId }
+                        if (event != null){
+                            viewModel.joinEvent(event)
+                        }
+                    }
                 )
             }
             composable("profile"){
@@ -166,7 +175,8 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                             launchSingleTop = true
                         }
                     },
-                    onManageSpotsClick = {navController.navigate("manage_spots")}
+                    onManageSpotsClick = {navController.navigate("manage_spots")},
+                    onManageSignUpsClick = {navController.navigate("manage_signups")}
                 )
             }
             // Auth Area
@@ -253,6 +263,12 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                         LaunchedEffect(Unit) { navController.popBackStack() }
                     }
                 }
+            }
+            // Manage Sign ups
+            composable("manage_signups"){
+                ManageSignupsScreen(
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }

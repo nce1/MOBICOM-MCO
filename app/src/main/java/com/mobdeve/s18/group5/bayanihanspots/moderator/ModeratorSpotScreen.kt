@@ -92,7 +92,7 @@ fun ModeratorSpotScreen(spotId: String, onBack: () -> Unit){
                                     onBack()
                                 }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)), // Green
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(Icons.Default.Check, null)
