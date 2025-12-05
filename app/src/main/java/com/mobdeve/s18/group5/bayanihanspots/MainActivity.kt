@@ -42,6 +42,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.OnMapsSdkInitializedCallback
+import com.mobdeve.s18.group5.bayanihanspots.auth.ui.login.ForgotPasswordScreen
 import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
 import com.mobdeve.s18.group5.bayanihanspots.manage.signups.ManageSignupsScreen
 import com.mobdeve.s18.group5.bayanihanspots.manage.spots.AddSpotScreen
@@ -180,6 +181,7 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                             launchSingleTop = true
                         }
                     },
+                    onNotificationsClick = { navController.navigate("notifications") },
                     onManageSpotsClick = { navController.navigate("manage_spots") },
                     onManageProgramsClick = { navController.navigate("manage_programs") },
                     onManageSignupsClick = { navController.navigate("manage_signups") }
@@ -215,7 +217,13 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                             }
                         }
                     },
-                    onSignupClick = { navController.navigate("signup") }
+                    onSignupClick = { navController.navigate("signup") },
+                    onForgotPasswordClick = { navController.navigate("forgot_password") }
+                )
+            }
+            composable("forgot_password") {
+                ForgotPasswordScreen(
+                    onBack = { navController.popBackStack() }
                 )
             }
             composable("notifications"){

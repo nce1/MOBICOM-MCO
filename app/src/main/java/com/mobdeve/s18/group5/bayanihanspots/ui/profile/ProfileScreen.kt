@@ -9,6 +9,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,21 +25,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mobdeve.s18.group5.bayanihanspots.R
 import com.mobdeve.s18.group5.bayanihanspots.auth.data.model.LoggedInUser
 
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
     onLogout: () -> Unit,
+    onNotificationsClick: () -> Unit,
     onManageSpotsClick: () -> Unit,
     onManageProgramsClick: () -> Unit,
     onManageSignupsClick: () -> Unit
-){
+) {
     val user: LoggedInUser? by viewModel.profile.observeAsState(null)
     val completedCount by viewModel.completedCount.observeAsState("00")
     val activeCount by viewModel.activeCount.observeAsState("00")
@@ -49,12 +57,15 @@ fun ProfileScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(64.dp))
-        Image(
-            painter = painterResource(id = R.drawable.ic_home_black_24dp),
+
+        Icon(
+            imageVector = Icons.Default.AccountCircle,
             contentDescription = "Profile Picture",
+            tint = Color.Gray,
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape)
+                .background(Color.White)
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
@@ -70,35 +81,7 @@ fun ProfileScreen(
             color = Color.Gray
         )
         Spacer(modifier = Modifier.height(32.dp))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            StatCard(
-                title = "Completed",
-                count = completedCount,
-                backgroundColor = Color.White,
-                textColor = Color.Black,
-                modifier = Modifier.weight(1f)
-            )
-            StatCard(
-                title = "Active",
-                count = activeCount,
-                backgroundColor = Color.White,
-                textColor = Color.Black,
-                modifier = Modifier.weight(1f)
-            )
-            StatCard(
-                title = "Pending",
-                count = pendingCount,
-                backgroundColor = Color.White,
-                textColor = Color.Black,
-                modifier = Modifier.weight(1f)
-            )
-        }
-        Spacer(modifier = Modifier.height(32.dp))
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -108,29 +91,43 @@ fun ProfileScreen(
             elevation = CardDefaults.cardElevation(0.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
+
                 ProfileRow(
-                    icon = R.drawable.ic_home_black_24dp,
+                    icon = Icons.Default.Edit,
                     title = "Username",
                     subtitle = "@${user?.username ?: "..."}",
-                    onClick = { /* TODO: Implement navigation or action */ }
+                    onClick = { /* TODO: Edit Profile */ }
                 )
-                Divider(modifier = Modifier.padding(start = 40.dp, top = 4.dp, bottom = 4.dp), color = Color(0xFFF0F0F0))
+
+                HorizontalDivider(modifier = Modifier.padding(start = 40.dp, top = 4.dp, bottom = 4.dp), color = Color(0xFFF0F0F0))
+
                 ProfileRow(
-                    icon = R.drawable.ic_home_black_24dp,
+                    icon = Icons.Default.Notifications,
+                    title = "Notifications",
+                    subtitle = "View alerts",
+                    onClick = onNotificationsClick
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(start = 40.dp, top = 4.dp, bottom = 4.dp), color = Color(0xFFF0F0F0))
+
+                ProfileRow(
+                    icon = Icons.Default.Place,
                     title = "Manage Spots",
                     subtitle = "Create, Edit",
                     onClick = onManageSpotsClick
                 )
-                Divider(modifier = Modifier.padding(start = 40.dp, top = 4.dp, bottom = 4.dp), color = Color(0xFFF0F0F0))
+
+                HorizontalDivider(modifier = Modifier.padding(start = 40.dp, top = 4.dp, bottom = 4.dp), color = Color(0xFFF0F0F0))
                 ProfileRow(
-                    icon = R.drawable.ic_home_black_24dp,
+                    icon = Icons.Default.DateRange,
                     title = "Manage Programs",
                     subtitle = "Add, Edit",
                     onClick = onManageProgramsClick
                 )
-                Divider(modifier = Modifier.padding(start = 40.dp, top = 4.dp, bottom = 4.dp), color = Color(0xFFF0F0F0))
+
+                HorizontalDivider(modifier = Modifier.padding(start = 40.dp, top = 4.dp, bottom = 4.dp), color = Color(0xFFF0F0F0))
                 ProfileRow(
-                    icon = R.drawable.ic_home_black_24dp,
+                    icon = Icons.Default.Assignment,
                     title = "Manage Signups",
                     subtitle = "Edit, Cancel",
                     onClick = onManageSignupsClick
@@ -140,7 +137,9 @@ fun ProfileScreen(
         Spacer(modifier = Modifier.height(32.dp))
         OutlinedButton(
             onClick = { viewModel.signOut() },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFB00020)),
             border = BorderStroke(1.dp, Color(0xFFB00020))
         ) { Text("Sign Out") }
@@ -148,32 +147,16 @@ fun ProfileScreen(
 }
 
 @Composable
-fun StatCard(title: String, count: String, backgroundColor: Color, textColor: Color, modifier: Modifier = Modifier){
-    Card(
-        modifier = modifier.height(100.dp),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        elevation = CardDefaults.cardElevation(0.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(count, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = textColor)
-            Text(title, fontSize = 14.sp, color = textColor)
-        }
-    }
-}
-
-@Composable
-fun ProfileRow(icon: Int, title: String, subtitle: String, onClick: () -> Unit){
+fun ProfileRow(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            painter = painterResource(id = icon),
+            imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(24.dp),
             tint = Color.Gray
@@ -184,7 +167,7 @@ fun ProfileRow(icon: Int, title: String, subtitle: String, onClick: () -> Unit){
             Text(subtitle, fontSize = 14.sp, color = Color.Gray)
         }
         Icon(
-            painter = painterResource(id = R.drawable.ic_chevron_right),
+            imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
             modifier = Modifier.size(24.dp),
             tint = Color.Gray

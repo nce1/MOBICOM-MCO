@@ -8,7 +8,19 @@ import com.google.firebase.firestore.GeoPoint
 import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
 import com.mobdeve.s18.group5.bayanihanspots.data.local.BayanihanDatabase
 import com.mobdeve.s18.group5.bayanihanspots.data.local.entity.EventEntity
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import com.mobdeve.s18.group5.bayanihanspots.data.signups.Signups
+=======
+import com.mobdeve.s18.group5.bayanihanspots.data.local.entity.EventSignupEntity
+import com.mobdeve.s18.group5.bayanihanspots.data.local.entity.FavoriteEventEntity
+import com.mobdeve.s18.group5.bayanihanspots.workers.EventReminderScheduler
+>>>>>>> Stashed changes
+=======
+import com.mobdeve.s18.group5.bayanihanspots.data.local.entity.EventSignupEntity
+import com.mobdeve.s18.group5.bayanihanspots.data.local.entity.FavoriteEventEntity
+import com.mobdeve.s18.group5.bayanihanspots.workers.EventReminderScheduler
+>>>>>>> Stashed changes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -30,6 +42,8 @@ class OfflineFirstEventRepository(
 ) {
     private val database = BayanihanDatabase.getInstance(context)
     private val eventDao = database.eventDao()
+    private val favoriteEventDao = database.favoriteEventDao()
+    private val eventSignupDao = database.eventSignupDao()
 
     companion object {
         private const val TAG = "OfflineFirstEventRepo"
@@ -248,11 +262,17 @@ class OfflineFirstEventRepository(
 
             val signupId = "${event.id}_${userId}"
             val signupRef = firestore.collection("signups").document(signupId)
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
             val notificationRef = firestore.collection("users")
                 .document(event.creatorId)
                 .collection("notifications")
                 .document()
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 
             firestore.runTransaction { transaction ->
                 val snapshot = transaction.get(eventRef)
@@ -329,25 +349,57 @@ class OfflineFirstEventRepository(
         }
     }
 
-    // Find active events joined by a user
-    fun observeUserJoinedEventIds(userId: String): Flow<Set<String>> = callbackFlow{
+    // Find active events joined by a user - combines local DB and Firestore
+    fun observeUserJoinedEventIds(userId: String): Flow<Set<String>> = callbackFlow {
+        // First, emit from local database immediately
+        val localSignups = eventSignupDao.getSignupsByUser(userId)
+        val localIds = localSignups.map { it.eventId }.toSet()
+        trySend(localIds)
+
+        // Then listen to Firestore for real-time updates
         val query = firestore.collection("signups")
             .whereEqualTo("userId", userId)
             .whereEqualTo("status", "CONFIRMED")
 
         val listener = query.addSnapshotListener { snapshot, error ->
-            if (error != null){
-                trySend(emptySet())
+            if (error != null) {
+                Log.e(TAG, "Error observing joined events: ${error.message}")
                 return@addSnapshotListener
             }
-            if (snapshot != null){
+            if (snapshot != null) {
                 val ids = snapshot.documents.mapNotNull { it.getString("eventId") }.toSet()
                 trySend(ids)
+
+                // Also sync to local database
+                CoroutineScope(Dispatchers.IO).launch {
+                    for (doc in snapshot.documents) {
+                        val eventId = doc.getString("eventId") ?: continue
+                        val eventTitle = doc.getString("eventTitle") ?: ""
+                        val status = doc.getString("status") ?: "CONFIRMED"
+
+                        if (status == "CONFIRMED") {
+                            val entity = EventSignupEntity(
+                                id = doc.id,
+                                eventId = eventId,
+                                userId = userId,
+                                userEmail = doc.getString("userEmail") ?: "",
+                                eventTitle = eventTitle,
+                                eventSchedule = "",
+                                eventScheduleMillis = null,
+                                status = status,
+                                joinedAt = System.currentTimeMillis(),
+                                notificationScheduled = false
+                            )
+                            eventSignupDao.insert(entity)
+                        }
+                    }
+                }
             }
         }
         awaitClose { listener.remove() }
     }
 
+<<<<<<< Updated upstream
     // Find all events joined by the user
     fun observeUserSignups(userId: String): Flow<List<Signups>> = callbackFlow {
         val listener = firestore.collection("signups")
@@ -361,6 +413,634 @@ class OfflineFirstEventRepository(
                 trySend(signups)
             }
         awaitClose { listener.remove() }
+=======
+    // ==================== RSVP WITH NOTIFICATIONS ====================
+
+    /**
+     * Join an event and schedule reminder notifications
+     */
+    suspend fun joinEventWithNotifications(
+        event: Event,
+        userId: String,
+        userEmail: String
+    ): Result<String> {
+        return try {
+            val eventRef = firestore.collection("events").document(event.id)
+            val signupId = "${event.id}_${userId}"
+            val signupRef = firestore.collection("signups").document(signupId)
+
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(eventRef)
+                val currentCount = snapshot.getLong("currentVolunteers")?.toInt() ?: 0
+                val maxVolunteers = snapshot.getLong("maxVolunteers")?.toInt()
+
+                // Check if event is full
+                if (maxVolunteers != null && currentCount >= maxVolunteers) {
+                    throw Exception("Event is full")
+                }
+
+                // Check if already joined
+                val existingSignup = transaction.get(signupRef)
+                if (existingSignup.exists() && existingSignup.getString("status") == "CONFIRMED") {
+                    throw Exception("You have already joined this event")
+                }
+
+                val newSignup = hashMapOf(
+                    "signupId" to signupId,
+                    "eventId" to event.id,
+                    "eventTitle" to event.title,
+                    "userId" to userId,
+                    "userEmail" to userEmail,
+                    "status" to "CONFIRMED",
+                    "timestamp" to com.google.firebase.Timestamp.now()
+                )
+
+                transaction.set(signupRef, newSignup)
+                transaction.update(eventRef, "currentVolunteers", currentCount + 1)
+            }.await()
+
+            // Save to local database
+            val signupEntity = EventSignupEntity(
+                id = signupId,
+                eventId = event.id,
+                userId = userId,
+                userEmail = userEmail,
+                eventTitle = event.title,
+                eventSchedule = event.schedule,
+                eventScheduleMillis = event.scheduleUtcMillis,
+                status = "CONFIRMED",
+                joinedAt = System.currentTimeMillis(),
+                notificationScheduled = false
+            )
+            eventSignupDao.insert(signupEntity)
+
+            // Schedule notifications if event has a valid schedule time
+            if (event.scheduleUtcMillis != null && event.scheduleUtcMillis > System.currentTimeMillis()) {
+                EventReminderScheduler.scheduleReminders(
+                    context = context,
+                    eventId = event.id,
+                    eventTitle = event.title,
+                    eventScheduleMillis = event.scheduleUtcMillis
+                )
+                eventSignupDao.markNotificationScheduled(signupId)
+                Log.d(TAG, "Scheduled notifications for event: ${event.title}")
+            }
+
+            Result.success("Successfully joined! You'll be reminded before the event.")
+        } catch (e: Exception) {
+            val msg = when {
+                e.message?.contains("Event is full") == true -> "Event is full"
+                e.message?.contains("already joined") == true -> "You have already joined this event"
+                else -> "Failed to join: ${e.message}"
+            }
+            Result.failure(Exception(msg))
+        }
+    }
+
+    /**
+     * Leave an event and cancel scheduled notifications
+     */
+    suspend fun leaveEventWithNotifications(eventId: String, userId: String): Result<String> {
+        val signupId = "${eventId}_${userId}"
+
+        return try {
+            val eventRef = firestore.collection("events").document(eventId)
+            val signupRef = firestore.collection("signups").document(signupId)
+
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(eventRef)
+                val currentCount = snapshot.getLong("currentVolunteers")?.toInt() ?: 0
+
+                transaction.update(signupRef, "status", "CANCELLED")
+
+                if (currentCount > 0) {
+                    transaction.update(eventRef, "currentVolunteers", currentCount - 1)
+                }
+            }.await()
+
+            // Update local database
+            eventSignupDao.updateStatus(signupId, "CANCELLED")
+
+            // Cancel scheduled notifications
+            EventReminderScheduler.cancelReminders(context, eventId)
+
+            Result.success("You have left the event")
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+<<<<<<< Updated upstream
+    /**
+     * Observe if user has joined a specific event (from local database)
+     */
+    fun observeHasJoined(eventId: String, userId: String): Flow<Boolean> {
+        return eventSignupDao.observeHasJoined(eventId, userId)
+    }
+
+    /**
+     * Observe joined event IDs from local database (for immediate UI updates)
+     */
+    fun observeLocalJoinedEventIds(userId: String): Flow<Set<String>> {
+        return eventSignupDao.observeJoinedEventIds(userId).map { it.toSet() }
+    }
+
+    /**
+     * Sync joined events from Firestore to local database
+     */
+    suspend fun syncJoinedEventsFromFirestore(userId: String) {
+        try {
+            val snapshot = firestore.collection("signups")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("status", "CONFIRMED")
+                .get()
+                .await()
+
+            for (doc in snapshot.documents) {
+                val eventId = doc.getString("eventId") ?: continue
+                val eventTitle = doc.getString("eventTitle") ?: ""
+
+                val entity = EventSignupEntity(
+                    id = doc.id,
+                    eventId = eventId,
+                    userId = userId,
+                    userEmail = doc.getString("userEmail") ?: "",
+                    eventTitle = eventTitle,
+                    eventSchedule = "",
+                    eventScheduleMillis = null,
+                    status = "CONFIRMED",
+                    joinedAt = System.currentTimeMillis(),
+                    notificationScheduled = false
+                )
+                eventSignupDao.insert(entity)
+            }
+            Log.d(TAG, "Synced ${snapshot.size()} joined events from Firestore")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to sync joined events: ${e.message}")
+        }
+    }
+
+    /**
+     * Get user's joined events from local database
+     */
+    fun observeUserSignups(userId: String): Flow<List<EventSignupEntity>> {
+        return eventSignupDao.observeSignupsByUser(userId)
+    }
+
+    // ==================== FAVORITES ====================
+
+    /**
+     * Add event to favorites
+     */
+    suspend fun addToFavorites(event: Event, userId: String): Result<Unit> {
+        return try {
+            val favoriteId = "${event.id}_${userId}"
+            val favoriteEntity = FavoriteEventEntity(
+                id = favoriteId,
+                eventId = event.id,
+                userId = userId,
+                eventTitle = event.title,
+                eventSchedule = event.schedule
+            )
+            favoriteEventDao.insert(favoriteEntity)
+
+            // Also save to Firestore for cross-device sync
+            val favoriteRef = firestore.collection("user_favorites").document(favoriteId)
+            val favoriteData = hashMapOf(
+                "eventId" to event.id,
+                "userId" to userId,
+                "eventTitle" to event.title,
+                "addedAt" to com.google.firebase.Timestamp.now()
+            )
+            favoriteRef.set(favoriteData).await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to add favorite: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Remove event from favorites
+     */
+    suspend fun removeFromFavorites(eventId: String, userId: String): Result<Unit> {
+        return try {
+            favoriteEventDao.deleteByEventAndUser(eventId, userId)
+
+            // Also remove from Firestore
+            val favoriteId = "${eventId}_${userId}"
+            firestore.collection("user_favorites").document(favoriteId).delete().await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to remove favorite: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Toggle favorite status
+     */
+    suspend fun toggleFavorite(event: Event, userId: String): Result<Boolean> {
+        val isFavorite = favoriteEventDao.isFavorite(event.id, userId)
+        return if (isFavorite) {
+            removeFromFavorites(event.id, userId)
+            Result.success(false)
+        } else {
+            addToFavorites(event, userId)
+            Result.success(true)
+        }
+    }
+
+    /**
+     * Observe if event is favorited (from local database)
+     */
+    fun observeIsFavorite(eventId: String, userId: String): Flow<Boolean> {
+        return favoriteEventDao.observeIsFavorite(eventId, userId)
+    }
+
+    /**
+     * Observe user's favorite event IDs
+     */
+    fun observeFavoriteEventIds(userId: String): Flow<List<String>> {
+        return favoriteEventDao.observeFavoriteEventIds(userId)
+    }
+
+    /**
+     * Observe user's favorites
+     */
+    fun observeFavorites(userId: String): Flow<List<FavoriteEventEntity>> {
+        return favoriteEventDao.observeFavoritesByUser(userId)
+    }
+
+    /**
+     * Sync favorites from Firestore to local database
+     */
+    fun syncFavoritesFromFirestore(userId: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val snapshot = firestore.collection("user_favorites")
+                    .whereEqualTo("userId", userId)
+                    .get()
+                    .await()
+
+                for (doc in snapshot.documents) {
+                    val eventId = doc.getString("eventId") ?: continue
+                    val eventTitle = doc.getString("eventTitle") ?: ""
+
+                    val favoriteEntity = FavoriteEventEntity(
+                        id = doc.id,
+                        eventId = eventId,
+                        userId = userId,
+                        eventTitle = eventTitle,
+                        eventSchedule = ""
+                    )
+                    favoriteEventDao.insert(favoriteEntity)
+                }
+                Log.d(TAG, "Synced ${snapshot.size()} favorites from Firestore")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to sync favorites: ${e.message}")
+=======
+    // Find active events joined by a user - combines local DB and Firestore
+    fun observeUserJoinedEventIds(userId: String): Flow<Set<String>> = callbackFlow {
+        // First, emit from local database immediately
+        val localSignups = eventSignupDao.getSignupsByUser(userId)
+        val localIds = localSignups.map { it.eventId }.toSet()
+        trySend(localIds)
+
+        // Then listen to Firestore for real-time updates
+        val query = firestore.collection("signups")
+            .whereEqualTo("userId", userId)
+            .whereEqualTo("status", "CONFIRMED")
+
+        val listener = query.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.e(TAG, "Error observing joined events: ${error.message}")
+                return@addSnapshotListener
+            }
+            if (snapshot != null) {
+                val ids = snapshot.documents.mapNotNull { it.getString("eventId") }.toSet()
+                trySend(ids)
+
+                // Also sync to local database
+                CoroutineScope(Dispatchers.IO).launch {
+                    for (doc in snapshot.documents) {
+                        val eventId = doc.getString("eventId") ?: continue
+                        val eventTitle = doc.getString("eventTitle") ?: ""
+                        val status = doc.getString("status") ?: "CONFIRMED"
+
+                        if (status == "CONFIRMED") {
+                            val entity = EventSignupEntity(
+                                id = doc.id,
+                                eventId = eventId,
+                                userId = userId,
+                                userEmail = doc.getString("userEmail") ?: "",
+                                eventTitle = eventTitle,
+                                eventSchedule = "",
+                                eventScheduleMillis = null,
+                                status = status,
+                                joinedAt = System.currentTimeMillis(),
+                                notificationScheduled = false
+                            )
+                            eventSignupDao.insert(entity)
+                        }
+                    }
+                }
+>>>>>>> Stashed changes
+            }
+        }
+>>>>>>> Stashed changes
+    }
+
+    // ==================== RSVP WITH NOTIFICATIONS ====================
+
+    /**
+     * Join an event and schedule reminder notifications
+     */
+    suspend fun joinEventWithNotifications(
+        event: Event,
+        userId: String,
+        userEmail: String
+    ): Result<String> {
+        return try {
+            val eventRef = firestore.collection("events").document(event.id)
+            val signupId = "${event.id}_${userId}"
+            val signupRef = firestore.collection("signups").document(signupId)
+
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(eventRef)
+                val currentCount = snapshot.getLong("currentVolunteers")?.toInt() ?: 0
+                val maxVolunteers = snapshot.getLong("maxVolunteers")?.toInt()
+
+                // Check if event is full
+                if (maxVolunteers != null && currentCount >= maxVolunteers) {
+                    throw Exception("Event is full")
+                }
+
+                // Check if already joined
+                val existingSignup = transaction.get(signupRef)
+                if (existingSignup.exists() && existingSignup.getString("status") == "CONFIRMED") {
+                    throw Exception("You have already joined this event")
+                }
+
+                val newSignup = hashMapOf(
+                    "signupId" to signupId,
+                    "eventId" to event.id,
+                    "eventTitle" to event.title,
+                    "userId" to userId,
+                    "userEmail" to userEmail,
+                    "status" to "CONFIRMED",
+                    "timestamp" to com.google.firebase.Timestamp.now()
+                )
+
+                transaction.set(signupRef, newSignup)
+                transaction.update(eventRef, "currentVolunteers", currentCount + 1)
+            }.await()
+
+            // Save to local database
+            val signupEntity = EventSignupEntity(
+                id = signupId,
+                eventId = event.id,
+                userId = userId,
+                userEmail = userEmail,
+                eventTitle = event.title,
+                eventSchedule = event.schedule,
+                eventScheduleMillis = event.scheduleUtcMillis,
+                status = "CONFIRMED",
+                joinedAt = System.currentTimeMillis(),
+                notificationScheduled = false
+            )
+            eventSignupDao.insert(signupEntity)
+
+            // Schedule notifications if event has a valid schedule time
+            if (event.scheduleUtcMillis != null && event.scheduleUtcMillis > System.currentTimeMillis()) {
+                EventReminderScheduler.scheduleReminders(
+                    context = context,
+                    eventId = event.id,
+                    eventTitle = event.title,
+                    eventScheduleMillis = event.scheduleUtcMillis
+                )
+                eventSignupDao.markNotificationScheduled(signupId)
+                Log.d(TAG, "Scheduled notifications for event: ${event.title}")
+            }
+
+            Result.success("Successfully joined! You'll be reminded before the event.")
+        } catch (e: Exception) {
+            val msg = when {
+                e.message?.contains("Event is full") == true -> "Event is full"
+                e.message?.contains("already joined") == true -> "You have already joined this event"
+                else -> "Failed to join: ${e.message}"
+            }
+            Result.failure(Exception(msg))
+        }
+    }
+
+    /**
+     * Leave an event and cancel scheduled notifications
+     */
+    suspend fun leaveEventWithNotifications(eventId: String, userId: String): Result<String> {
+        val signupId = "${eventId}_${userId}"
+
+        return try {
+            val eventRef = firestore.collection("events").document(eventId)
+            val signupRef = firestore.collection("signups").document(signupId)
+
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(eventRef)
+                val currentCount = snapshot.getLong("currentVolunteers")?.toInt() ?: 0
+
+                transaction.update(signupRef, "status", "CANCELLED")
+
+                if (currentCount > 0) {
+                    transaction.update(eventRef, "currentVolunteers", currentCount - 1)
+                }
+            }.await()
+
+            // Update local database
+            eventSignupDao.updateStatus(signupId, "CANCELLED")
+
+            // Cancel scheduled notifications
+            EventReminderScheduler.cancelReminders(context, eventId)
+
+            Result.success("You have left the event")
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Observe if user has joined a specific event (from local database)
+     */
+    fun observeHasJoined(eventId: String, userId: String): Flow<Boolean> {
+        return eventSignupDao.observeHasJoined(eventId, userId)
+    }
+
+    /**
+     * Observe joined event IDs from local database (for immediate UI updates)
+     */
+    fun observeLocalJoinedEventIds(userId: String): Flow<Set<String>> {
+        return eventSignupDao.observeJoinedEventIds(userId).map { it.toSet() }
+    }
+
+    /**
+     * Sync joined events from Firestore to local database
+     */
+    suspend fun syncJoinedEventsFromFirestore(userId: String) {
+        try {
+            val snapshot = firestore.collection("signups")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("status", "CONFIRMED")
+                .get()
+                .await()
+
+            for (doc in snapshot.documents) {
+                val eventId = doc.getString("eventId") ?: continue
+                val eventTitle = doc.getString("eventTitle") ?: ""
+
+                val entity = EventSignupEntity(
+                    id = doc.id,
+                    eventId = eventId,
+                    userId = userId,
+                    userEmail = doc.getString("userEmail") ?: "",
+                    eventTitle = eventTitle,
+                    eventSchedule = "",
+                    eventScheduleMillis = null,
+                    status = "CONFIRMED",
+                    joinedAt = System.currentTimeMillis(),
+                    notificationScheduled = false
+                )
+                eventSignupDao.insert(entity)
+            }
+            Log.d(TAG, "Synced ${snapshot.size()} joined events from Firestore")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to sync joined events: ${e.message}")
+        }
+    }
+
+    /**
+     * Get user's joined events from local database
+     */
+    fun observeUserSignups(userId: String): Flow<List<EventSignupEntity>> {
+        return eventSignupDao.observeSignupsByUser(userId)
+    }
+
+    // ==================== FAVORITES ====================
+
+    /**
+     * Add event to favorites
+     */
+    suspend fun addToFavorites(event: Event, userId: String): Result<Unit> {
+        return try {
+            val favoriteId = "${event.id}_${userId}"
+            val favoriteEntity = FavoriteEventEntity(
+                id = favoriteId,
+                eventId = event.id,
+                userId = userId,
+                eventTitle = event.title,
+                eventSchedule = event.schedule
+            )
+            favoriteEventDao.insert(favoriteEntity)
+
+            // Also save to Firestore for cross-device sync
+            val favoriteRef = firestore.collection("user_favorites").document(favoriteId)
+            val favoriteData = hashMapOf(
+                "eventId" to event.id,
+                "userId" to userId,
+                "eventTitle" to event.title,
+                "addedAt" to com.google.firebase.Timestamp.now()
+            )
+            favoriteRef.set(favoriteData).await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to add favorite: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Remove event from favorites
+     */
+    suspend fun removeFromFavorites(eventId: String, userId: String): Result<Unit> {
+        return try {
+            favoriteEventDao.deleteByEventAndUser(eventId, userId)
+
+            // Also remove from Firestore
+            val favoriteId = "${eventId}_${userId}"
+            firestore.collection("user_favorites").document(favoriteId).delete().await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to remove favorite: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Toggle favorite status
+     */
+    suspend fun toggleFavorite(event: Event, userId: String): Result<Boolean> {
+        val isFavorite = favoriteEventDao.isFavorite(event.id, userId)
+        return if (isFavorite) {
+            removeFromFavorites(event.id, userId)
+            Result.success(false)
+        } else {
+            addToFavorites(event, userId)
+            Result.success(true)
+        }
+    }
+
+    /**
+     * Observe if event is favorited (from local database)
+     */
+    fun observeIsFavorite(eventId: String, userId: String): Flow<Boolean> {
+        return favoriteEventDao.observeIsFavorite(eventId, userId)
+    }
+
+    /**
+     * Observe user's favorite event IDs
+     */
+    fun observeFavoriteEventIds(userId: String): Flow<List<String>> {
+        return favoriteEventDao.observeFavoriteEventIds(userId)
+    }
+
+    /**
+     * Observe user's favorites
+     */
+    fun observeFavorites(userId: String): Flow<List<FavoriteEventEntity>> {
+        return favoriteEventDao.observeFavoritesByUser(userId)
+    }
+
+    /**
+     * Sync favorites from Firestore to local database
+     */
+    fun syncFavoritesFromFirestore(userId: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val snapshot = firestore.collection("user_favorites")
+                    .whereEqualTo("userId", userId)
+                    .get()
+                    .await()
+
+                for (doc in snapshot.documents) {
+                    val eventId = doc.getString("eventId") ?: continue
+                    val eventTitle = doc.getString("eventTitle") ?: ""
+
+                    val favoriteEntity = FavoriteEventEntity(
+                        id = doc.id,
+                        eventId = eventId,
+                        userId = userId,
+                        eventTitle = eventTitle,
+                        eventSchedule = ""
+                    )
+                    favoriteEventDao.insert(favoriteEntity)
+                }
+                Log.d(TAG, "Synced ${snapshot.size()} favorites from Firestore")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to sync favorites: ${e.message}")
+            }
+        }
     }
 }
 
