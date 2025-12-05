@@ -6,9 +6,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.FiberNew
-import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,21 +17,39 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.firebase.firestore.FirebaseFirestore
-import com.mobdeve.s18.group5.bayanihanspots.data.spots.Spot
-import com.mobdeve.s18.group5.bayanihanspots.data.spots.toSpot
+import com.mobdeve.s18.group5.bayanihanspots.data.events.Event
 
 @Composable
-fun ModeratorSpotList(onSpotClick: (String) -> Unit) {
+fun ModeratorEventList(onEventClick: (String) -> Unit) {
     val firestore = FirebaseFirestore.getInstance()
-    var pendingSpots by remember { mutableStateOf<List<Spot>>(emptyList()) }
+    var pendingEvents by remember { mutableStateOf<List<Event>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        firestore.collection("spots")
+        firestore.collection("events")
             .whereEqualTo("approvalStatus", "PENDING")
             .addSnapshotListener { snapshot, _ ->
                 if (snapshot != null) {
-                    pendingSpots = snapshot.documents.mapNotNull { it.toSpot() }
+                    pendingEvents = snapshot.documents.mapNotNull { doc ->
+                        try {
+                            Event(
+                                id = doc.id,
+                                title = doc.getString("title") ?: "",
+                                schedule = doc.getString("schedule") ?: "",
+                                locationLabel = doc.getString("locationLabel") ?: "",
+                                description = doc.getString("description") ?: "",
+                                host = doc.getString("host"),
+                                maxVolunteers = doc.getLong("maxVolunteers")?.toInt(),
+                                scheduleUtcMillis = doc.getLong("scheduleUtcMillis"),
+                                creatorId = doc.getString("creatorId") ?: "",
+                                approvalStatus = doc.getString("approvalStatus") ?: "PENDING",
+                                modificationType = doc.getString("modificationType") ?: "NEW",
+                                currentVolunteers = doc.getLong("currentVolunteers")?.toInt() ?: 0
+                            )
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
                 }
                 isLoading = false
             }
@@ -45,12 +63,12 @@ fun ModeratorSpotList(onSpotClick: (String) -> Unit) {
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Spot Requests",
+                    text = "Event Requests",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${pendingSpots.size} pending approval",
+                    text = "${pendingEvents.size} pending approval",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                 )
@@ -61,18 +79,18 @@ fun ModeratorSpotList(onSpotClick: (String) -> Unit) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-        } else if (pendingSpots.isEmpty()) {
+        } else if (pendingEvents.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        Icons.Default.Place,
+                        Icons.Default.Event,
                         contentDescription = null,
                         modifier = Modifier.size(64.dp),
                         tint = Color.LightGray
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "No pending spot requests",
+                        text = "No pending event requests",
                         color = Color.Gray,
                         style = MaterialTheme.typography.bodyLarge
                     )
@@ -84,10 +102,10 @@ fun ModeratorSpotList(onSpotClick: (String) -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(pendingSpots) { spot ->
-                    SpotRequestCard(
-                        spot = spot,
-                        onClick = { onSpotClick(spot.id) }
+                items(pendingEvents) { event ->
+                    EventRequestCard(
+                        event = event,
+                        onClick = { onEventClick(event.id) }
                     )
                 }
             }
@@ -96,8 +114,8 @@ fun ModeratorSpotList(onSpotClick: (String) -> Unit) {
 }
 
 @Composable
-fun SpotRequestCard(spot: Spot, onClick: () -> Unit) {
-    val isNewSubmission = spot.modificationType == "NEW"
+fun EventRequestCard(event: Event, onClick: () -> Unit) {
+    val isNewSubmission = event.modificationType == "NEW"
 
     Card(
         elevation = CardDefaults.cardElevation(2.dp),
@@ -132,7 +150,7 @@ fun SpotRequestCard(spot: Spot, onClick: () -> Unit) {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = spot.name,
+                        text = event.title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -147,20 +165,38 @@ fun SpotRequestCard(spot: Spot, onClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Type info
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Surface(
-                    color = Color(0xFFE8F5E9),
-                    shape = MaterialTheme.shapes.small
-                ) {
+            // Schedule info
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.Schedule,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = Color.Gray
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = event.schedule,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Host info
+            if (!event.host.isNullOrBlank()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = spot.type,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF2E7D32),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        text = "Host: ${event.host}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
                     )
                 }
             }
@@ -169,10 +205,11 @@ fun SpotRequestCard(spot: Spot, onClick: () -> Unit) {
 
             // Creator info
             Text(
-                text = "Submitted by: ${spot.userID.take(20)}${if (spot.userID.length > 20) "..." else ""}",
+                text = "Submitted by: ${event.creatorId.take(20)}...",
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.LightGray
             )
         }
     }
 }
+
