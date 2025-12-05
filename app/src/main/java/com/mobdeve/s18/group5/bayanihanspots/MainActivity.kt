@@ -213,13 +213,25 @@ fun MainApp(auth: FirebaseAuth, application: Application){
             }
             // Manage Spots Area
             composable("manage_spots"){
+                val context = LocalContext.current
                 LaunchedEffect(Unit){ manageSpotsViewModel.fetchUserSpots() }
                 ManageSpotsScreen(
                     spots = manageSpotsViewModel.mySpots,
                     isLoading = manageSpotsViewModel.isLoading,
                     onBack = { navController.popBackStack() },
                     onAddSpot = { navController.navigate("add_spot") },
-                    onEditSpot = { spotId -> navController.navigate("edit_spot/$spotId") }
+                    onEditSpot = { spotId -> navController.navigate("edit_spot/$spotId") },
+                    onDeleteSpot = { spotId ->
+                        manageSpotsViewModel.deleteSpot(
+                            spotId = spotId,
+                            onSuccess = {
+                                android.widget.Toast.makeText(context, "Spot deleted successfully", android.widget.Toast.LENGTH_SHORT).show()
+                            },
+                            onFailure = { e ->
+                                android.widget.Toast.makeText(context, "Failed to delete: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
                 )
             }
             composable("add_spot"){

@@ -1,6 +1,10 @@
 package com.mobdeve.s18.group5.bayanihanspots.manage.spots
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -19,9 +23,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.EditLocation
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,6 +42,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -43,6 +53,10 @@ import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.storage.FirebaseStorage
 import com.google.maps.android.compose.*
 import com.mobdeve.s18.group5.bayanihanspots.data.spots.Spot
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,15 +74,55 @@ fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
 
     // Default Location for Open Map
     var selectedLocation by remember { mutableStateOf(LatLng(14.5995, 120.9842)) }
+    var addressText by remember { mutableStateOf("") }
     var showMapPicker by remember { mutableStateOf(false) }
 
     var selectedImages by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var isUploading by remember { mutableStateOf(false) }
+    var showImageSourceDialog by remember { mutableStateOf(false) }
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
 
     val typeOptions = listOf("Study", "Rest", "Play", "Market", "Dining")
     val crowdOptions = listOf("Quiet", "Moderate", "Busy", "Packed")
 
-    val photoPickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.PickMultipleVisualMedia(), onResult = { uris -> selectedImages = uris })
+    val photoPickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.PickMultipleVisualMedia(), onResult = { uris -> selectedImages = selectedImages + uris })
+
+    // Camera launcher
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempCameraUri != null) {
+            selectedImages = selectedImages + tempCameraUri!!
+        }
+    }
+
+    // Permission launcher for camera
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Create image file and launch camera
+            val uri = createImageUri(context)
+            tempCameraUri = uri
+            cameraLauncher.launch(uri)
+        } else {
+            Toast.makeText(context, "Camera permission is required to take photos", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Function to launch camera with permission check
+    fun launchCamera() {
+        when {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED -> {
+                val uri = createImageUri(context)
+                tempCameraUri = uri
+                cameraLauncher.launch(uri)
+            }
+            else -> {
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -91,7 +145,7 @@ fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
                 item{
                     Box(
                         modifier = Modifier.size(100.dp).border(1.dp, Color.Gray, RoundedCornerShape(8.dp)).clickable {
-                            photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            showImageSourceDialog = true
                         },
                         contentAlignment = Alignment.Center
                     ) {
@@ -115,6 +169,47 @@ fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
             CustomDropdown(label = "Crowd Level", options = crowdOptions, selectedOption = crowdLevel, onOptionSelected = { crowdLevel = it })
             OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
             Text("Location", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+
+            // Address search bar
+            OutlinedTextField(
+                value = addressText,
+                onValueChange = { addressText = it },
+                label = { Text("Search address") },
+                placeholder = { Text("Enter address or place name") },
+                trailingIcon = {
+                    IconButton(
+                        onClick = {
+                            if (addressText.isNotBlank()) {
+                                try {
+                                    val geocoder = Geocoder(context)
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                        geocoder.getFromLocationName(addressText, 1) { addresses ->
+                                            if (addresses.isNotEmpty()) {
+                                                val address = addresses[0]
+                                                selectedLocation = LatLng(address.latitude, address.longitude)
+                                            }
+                                        }
+                                    } else {
+                                        @Suppress("DEPRECATION")
+                                        val addresses = geocoder.getFromLocationName(addressText, 1)
+                                        if (!addresses.isNullOrEmpty()) {
+                                            val address = addresses[0]
+                                            selectedLocation = LatLng(address.latitude, address.longitude)
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Could not find address", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -180,6 +275,8 @@ fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
         }
     }
     if (showMapPicker){
+        var mapSearchQuery by remember { mutableStateOf("") }
+
         Dialog(onDismissRequest = { showMapPicker = false }, properties = DialogProperties(usePlatformDefaultWidth = false)){
             Scaffold(
                 topBar = {
@@ -203,10 +300,59 @@ fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
                         tint = Color.Red,
                         modifier = Modifier.size(48.dp).align(Alignment.Center).offset(y = (-24).dp)
                     )
+
+                    // Search bar at the top
+                    OutlinedTextField(
+                        value = mapSearchQuery,
+                        onValueChange = { mapSearchQuery = it },
+                        placeholder = { Text("Search address...") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                        trailingIcon = {
+                            if (mapSearchQuery.isNotBlank()) {
+                                IconButton(
+                                    onClick = {
+                                        try {
+                                            val geocoder = Geocoder(context)
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                                geocoder.getFromLocationName(mapSearchQuery, 1) { addresses ->
+                                                    if (addresses.isNotEmpty()) {
+                                                        val address = addresses[0]
+                                                        selectedLocation = LatLng(address.latitude, address.longitude)
+                                                    }
+                                                }
+                                            } else {
+                                                @Suppress("DEPRECATION")
+                                                val addresses = geocoder.getFromLocationName(mapSearchQuery, 1)
+                                                if (!addresses.isNullOrEmpty()) {
+                                                    val address = addresses[0]
+                                                    selectedLocation = LatLng(address.latitude, address.longitude)
+                                                }
+                                            }
+                                        } catch (e: Exception) {
+                                            Toast.makeText(context, "Could not find address", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                ) {
+                                    Icon(Icons.Default.Search, contentDescription = "Search")
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
+                        )
+                    )
+
                     Surface(
                         color = MaterialTheme.colorScheme.primaryContainer,
                         shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.align(Alignment.TopCenter).padding(16.dp)
+                        modifier = Modifier.align(Alignment.TopCenter).padding(top = 70.dp)
                     ){
                         Text(
                             "Move map to center the pin",
@@ -226,6 +372,67 @@ fun AddSpotScreen(onBack: () -> Unit, onSaveSuccess: () -> Unit){
                 }
             }
         }
+    }
+
+    // Image source selection dialog
+    if (showImageSourceDialog) {
+        AlertDialog(
+            onDismissRequest = { showImageSourceDialog = false },
+            title = { Text("Add Photo") },
+            text = {
+                Column {
+                    Text("Choose how you want to add a photo")
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clickable {
+                                    showImageSourceDialog = false
+                                    launchCamera()
+                                }
+                                .padding(16.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.CameraAlt,
+                                contentDescription = "Camera",
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Camera", style = MaterialTheme.typography.labelMedium)
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clickable {
+                                    showImageSourceDialog = false
+                                    photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                }
+                                .padding(16.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.PhotoLibrary,
+                                contentDescription = "Gallery",
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Gallery", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showImageSourceDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -259,3 +466,26 @@ fun uploadImagesToFirebase(storage: FirebaseStorage, uris: List<Uri>, onComplete
             .addOnFailureListener { count++; if (count == uris.size) onComplete(uploadedUrls) }
     }
 }
+
+/**
+ * Creates a temporary image URI for camera capture using FileProvider
+ */
+fun createImageUri(context: android.content.Context): Uri {
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+    val imageFileName = "SPOT_${timeStamp}.jpg"
+
+    // Create the camera_images directory if it doesn't exist
+    val cacheDir = File(context.cacheDir, "camera_images")
+    if (!cacheDir.exists()) {
+        cacheDir.mkdirs()
+    }
+
+    val imageFile = File(cacheDir, imageFileName)
+
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        imageFile
+    )
+}
+

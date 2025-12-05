@@ -19,8 +19,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -32,9 +34,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,7 +56,9 @@ import com.mobdeve.s18.group5.bayanihanspots.data.spots.Spot
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ManageSpotsScreen(spots: List<Spot>, isLoading: Boolean, onBack: () -> Unit, onAddSpot: () -> Unit, onEditSpot: (String) -> Unit){
+fun ManageSpotsScreen(spots: List<Spot>, isLoading: Boolean, onBack: () -> Unit, onAddSpot: () -> Unit, onEditSpot: (String) -> Unit, onDeleteSpot: (String) -> Unit){
+    var spotToDelete by remember { mutableStateOf<Spot?>(null) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -93,16 +102,44 @@ fun ManageSpotsScreen(spots: List<Spot>, isLoading: Boolean, onBack: () -> Unit,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ){
                     items(spots) { spot ->
-                        MySpotItem(spot = spot, onEdit = { onEditSpot(spot.id) })
+                        MySpotItem(
+                            spot = spot,
+                            onEdit = { onEditSpot(spot.id) },
+                            onDelete = { spotToDelete = spot }
+                        )
                     }
                 }
             }
         }
     }
+
+    // Delete confirmation dialog
+    if (spotToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { spotToDelete = null },
+            title = { Text("Delete Spot") },
+            text = { Text("Are you sure you want to delete \"${spotToDelete!!.name}\"? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteSpot(spotToDelete!!.id)
+                        spotToDelete = null
+                    }
+                ) {
+                    Text("Delete", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { spotToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
-fun MySpotItem(spot: Spot, onEdit: () -> Unit){
+fun MySpotItem(spot: Spot, onEdit: () -> Unit, onDelete: () -> Unit){
     Card(elevation = CardDefaults.cardElevation(2.dp), colors = CardDefaults.cardColors(containerColor = Color.White)){
         Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically){
             val image = spot.imageList.firstOrNull()
@@ -148,6 +185,14 @@ fun MySpotItem(spot: Spot, onEdit: () -> Unit){
                     fontWeight = FontWeight.Bold
                 )
             }
+
+            // Show delete button for pending or rejected spots
+            if (spot.approvalStatus != "APPROVED") {
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red)
+                }
+            }
+
             IconButton(onClick = onEdit) {
                 Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.Gray)
             }

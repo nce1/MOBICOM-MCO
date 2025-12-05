@@ -34,4 +34,12 @@ class ManageSpotsViewModel : ViewModel(){
     fun getSpotById(id: String): Spot?{
         return mySpots.find { it.id == id }
     }
+
+    fun deleteSpot(spotId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        FirebaseFirestore.getInstance().collection("spots")
+            .document(spotId)
+            .delete()
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
 }
