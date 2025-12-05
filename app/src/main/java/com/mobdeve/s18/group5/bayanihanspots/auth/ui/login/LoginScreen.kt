@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.mobdeve.s18.group5.bayanihanspots.R
 
 @Composable
-fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit, onSignupClick: () -> Unit){
+fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit, onSignupClick: () -> Unit, onForgotPasswordClick: () -> Unit){
     val formState by viewModel.loginFormState.observeAsState()
     val isLoading by viewModel.isLoading.observeAsState(false)
     val loginResult by viewModel.loginResult.observeAsState()
@@ -151,16 +151,19 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit, onSignupC
                         formState?.passwordError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Forgot Password?",
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.End,
+                    TextButton(
+                        onClick = onForgotPasswordClick,
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .align(Alignment.End)
                             .padding(end = 8.dp)
-                    )
+                    ) {
+                        Text(
+                            text = "Forgot Password?",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                     Spacer(modifier = Modifier.height(32.dp))
                     Button(
                         onClick = {
