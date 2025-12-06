@@ -115,11 +115,9 @@ class OfflineFirstSpotRepository(
                     doc.toSpot()?.let { SpotEntity.fromSpot(it) }
                 }
 
-                if (spots.isNotEmpty()) {
-                    // Update Room with fetched data
-                    spotDao.insertSpots(spots)
-                    Log.d(TAG, "Synced ${spots.size} spots from Firestore")
-                }
+                // Replace all spots to ensure deleted spots are removed
+                spotDao.replaceAllSpots(spots)
+                Log.d(TAG, "Synced ${spots.size} spots from Firestore")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to sync from Firestore: ${e.message}")
                 // App continues to work with cached data
@@ -223,10 +221,9 @@ class OfflineFirstSpotRepository(
                         val spots = snap.documents.mapNotNull { doc ->
                             doc.toSpot()?.let { SpotEntity.fromSpot(it) }
                         }
-                        if (spots.isNotEmpty()) {
-                            spotDao.insertSpots(spots)
-                            Log.d(TAG, "Realtime sync: updated ${spots.size} spots")
-                        }
+                        // Replace all spots to ensure deleted spots are removed
+                        spotDao.replaceAllSpots(spots)
+                        Log.d(TAG, "Realtime sync: replaced with ${spots.size} spots")
                     }
                 }
             }

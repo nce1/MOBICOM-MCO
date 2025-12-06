@@ -102,10 +102,9 @@ class OfflineFirstEventRepository(
                     }
                 }
 
-                if (events.isNotEmpty()) {
-                    eventDao.insertEvents(events)
-                    Log.d(TAG, "Synced ${events.size} events from Firestore")
-                }
+                // Replace all events to ensure deleted events are removed
+                eventDao.replaceAllEvents(events)
+                Log.d(TAG, "Synced ${events.size} events from Firestore")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to sync from Firestore: ${e.message}")
                 // App continues to work with cached data
@@ -163,10 +162,9 @@ class OfflineFirstEventRepository(
                                 null
                             }
                         }
-                        if (events.isNotEmpty()) {
-                            eventDao.insertEvents(events)
-                            Log.d(TAG, "Realtime sync: updated ${events.size} events")
-                        }
+                        // Replace all events to ensure deleted events are removed
+                        eventDao.replaceAllEvents(events)
+                        Log.d(TAG, "Realtime sync: replaced with ${events.size} events")
                     }
                 }
             }
