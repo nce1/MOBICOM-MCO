@@ -66,6 +66,7 @@ fun HomeScreen(
     var showFullscreenMap by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var showMapView by remember { mutableStateOf(false) } // Toggle between map and list view
+    var focusedSpot by remember { mutableStateOf<Spot?>(null) } // Spot to focus on map
     val fusedLocationClient = remember {
         LocationServices.getFusedLocationProviderClient(context)
     }
@@ -301,9 +302,11 @@ fun HomeScreen(
                             HomeMap(
                                 spots = filteredSpots,
                                 userLocation = viewModel.userLocation,
+                                focusedSpot = focusedSpot,
                                 onMarkerClick = { clickedSpot ->
                                     selectedSpot = clickedSpot // Show modal instead of navigating
-                                }
+                                },
+                                onFocusComplete = { focusedSpot = null } // Clear focus after animation
                             )
 
                             // Fullscreen button
@@ -385,6 +388,7 @@ fun HomeScreen(
                                         HomeMap(
                                             spots = filteredSpots,
                                             userLocation = viewModel.userLocation,
+                                            focusedSpot = null,
                                             onMarkerClick = { }
                                         )
 
@@ -473,7 +477,11 @@ fun HomeScreen(
                             items(filteredSpots) { spot ->
                                 SpotCard(
                                     spot = spot,
-                                    onClick = { onNavigateToDetails(spot) }
+                                    onClick = { onNavigateToDetails(spot) },
+                                    onShowOnMap = {
+                                        focusedSpot = spot
+                                        showMapView = true
+                                    }
                                 )
                             }
 
@@ -525,9 +533,11 @@ fun HomeScreen(
                             HomeMap(
                                 spots = filteredSpots,
                                 userLocation = viewModel.userLocation,
+                                focusedSpot = focusedSpot,
                                 onMarkerClick = { clickedSpot ->
                                     selectedSpot = clickedSpot // Show modal instead of navigating
-                                }
+                                },
+                                onFocusComplete = { focusedSpot = null }
                             )
 
                             // Close button
@@ -636,7 +646,7 @@ fun HomeScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SpotCard(spot: Spot, onClick: () -> Unit) {
+fun SpotCard(spot: Spot, onClick: () -> Unit, onShowOnMap: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -757,6 +767,21 @@ fun SpotCard(spot: Spot, onClick: () -> Unit) {
                         }
                     }
                 }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Show on Map button
+            IconButton(
+                onClick = onShowOnMap,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    Icons.Default.Map,
+                    contentDescription = "Show on Map",
+                    tint = PrimaryTeal,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }

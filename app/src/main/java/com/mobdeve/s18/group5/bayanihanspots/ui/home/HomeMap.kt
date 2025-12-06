@@ -21,13 +21,35 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.mobdeve.s18.group5.bayanihanspots.data.spots.Spot
 
 @Composable
-fun HomeMap(spots: List<Spot>, userLocation: Location?, onMarkerClick: (Spot) -> Unit){
+fun HomeMap(
+    spots: List<Spot>,
+    userLocation: Location?,
+    focusedSpot: Spot? = null,
+    onMarkerClick: (Spot) -> Unit,
+    onFocusComplete: () -> Unit = {}
+){
     val lat = userLocation?.latitude ?: 14.564840351545678
     val long = userLocation?.longitude ?: 120.99288364166271
 
     val defaultLocation = LatLng(lat, long)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(defaultLocation, 15f)
+    }
+
+    // Focus on a specific spot when requested
+    LaunchedEffect(focusedSpot) {
+        if (focusedSpot != null && focusedSpot.coordinates != null) {
+            val spotLocation = LatLng(
+                focusedSpot.coordinates.latitude,
+                focusedSpot.coordinates.longitude
+            )
+            cameraPositionState.animate(
+                update = CameraUpdateFactory.newLatLngZoom(spotLocation, 17f),
+                durationMs = 1000
+            )
+            // Notify that focus animation is complete
+            onFocusComplete()
+        }
     }
 
     LaunchedEffect(userLocation){
