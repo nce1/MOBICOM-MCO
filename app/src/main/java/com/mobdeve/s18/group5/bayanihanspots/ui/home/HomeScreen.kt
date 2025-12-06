@@ -67,6 +67,12 @@ fun HomeScreen(
     var searchQuery by remember { mutableStateOf("") }
     var showMapView by remember { mutableStateOf(false) } // Toggle between map and list view
     var focusedSpot by remember { mutableStateOf<Spot?>(null) } // Spot to focus on map
+
+    // Debug: Track focusedSpot changes
+    LaunchedEffect(focusedSpot) {
+        android.util.Log.d("HomeScreen", "focusedSpot changed to: ${focusedSpot?.name ?: "null"}")
+    }
+
     val fusedLocationClient = remember {
         LocationServices.getFusedLocationProviderClient(context)
     }
@@ -479,6 +485,8 @@ fun HomeScreen(
                                     spot = spot,
                                     onClick = { onNavigateToDetails(spot) },
                                     onShowOnMap = {
+                                        android.util.Log.d("HomeScreen", "Show on map clicked for: ${spot.name}")
+                                        android.util.Log.d("HomeScreen", "Spot coordinates: ${spot.coordinates?.latitude}, ${spot.coordinates?.longitude}")
                                         focusedSpot = spot
                                         showMapView = true
                                     }

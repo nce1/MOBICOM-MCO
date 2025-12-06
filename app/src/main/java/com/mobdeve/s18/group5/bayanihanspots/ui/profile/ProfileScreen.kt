@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.*
@@ -36,7 +37,8 @@ fun ProfileScreen(
     onNotificationsClick: () -> Unit,
     onManageSpotsClick: () -> Unit,
     onManageEventsClick: () -> Unit,
-    onManageSignUpsClick: () -> Unit
+    onManageSignUpsClick: () -> Unit,
+    onVisitHistoryClick: () -> Unit
 ) {
     val user: LoggedInUser? by viewModel.profile.observeAsState(null)
     val completedCount by viewModel.completedCount.observeAsState("00")
@@ -126,6 +128,14 @@ fun ProfileScreen(
                     title = "Manage Signups",
                     subtitle = "Edit, Cancel",
                     onClick = onManageSignUpsClick
+                )
+
+                Divider(modifier = Modifier.padding(start = 40.dp, top = 4.dp, bottom = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                ProfileRow(
+                    icon = Icons.Default.History,
+                    title = "Visit History",
+                    subtitle = "Events attended",
+                    onClick = onVisitHistoryClick
                 )
             }
         }

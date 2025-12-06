@@ -18,6 +18,7 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import androidx.compose.runtime.rememberUpdatedState
 import com.mobdeve.s18.group5.bayanihanspots.data.spots.Spot
 
 @Composable
@@ -36,9 +37,13 @@ fun HomeMap(
         position = CameraPosition.fromLatLngZoom(defaultLocation, 15f)
     }
 
-    // Focus on a specific spot when requested
-    LaunchedEffect(focusedSpot) {
+    // Use rememberUpdatedState to capture the latest callback
+    val currentOnFocusComplete = rememberUpdatedState(onFocusComplete)
+
+    // Focus on a specific spot when requested - this takes priority
+    LaunchedEffect(focusedSpot?.id) {  // Use spot.id as key instead of the entire object
         if (focusedSpot != null && focusedSpot.coordinates != null) {
+            Log.d("MAP", "Focusing on spot: ${focusedSpot.name} at ${focusedSpot.coordinates.latitude}, ${focusedSpot.coordinates.longitude}")
             val spotLocation = LatLng(
                 focusedSpot.coordinates.latitude,
                 focusedSpot.coordinates.longitude
@@ -47,13 +52,16 @@ fun HomeMap(
                 update = CameraUpdateFactory.newLatLngZoom(spotLocation, 17f),
                 durationMs = 1000
             )
-            // Notify that focus animation is complete
-            onFocusComplete()
+            // Wait for animation to complete before clearing
+            kotlinx.coroutines.delay(1100)
+            currentOnFocusComplete.value()
         }
     }
 
-    LaunchedEffect(userLocation){
-        if (userLocation != null){
+    // Only animate to user location on initial load when no spot is focused
+    LaunchedEffect(userLocation) {
+        // Don't override if we're focusing on a specific spot
+        if (userLocation != null && focusedSpot == null) {
             cameraPositionState.animate(
                 update = CameraUpdateFactory.newLatLngZoom(
                     LatLng(userLocation.latitude, userLocation.longitude),
@@ -62,8 +70,7 @@ fun HomeMap(
                 durationMs = 1000
             )
         }
-
-        Log.d("MAP", "" +userLocation)
+        Log.d("MAP", "User location: $userLocation")
     }
 
     GoogleMap(modifier = Modifier

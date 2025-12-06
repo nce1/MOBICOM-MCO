@@ -42,6 +42,7 @@ import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.profile.ProfileViewModelFactory
+import com.mobdeve.s18.group5.bayanihanspots.ui.profile.VisitHistoryScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.BayanihanSpotsTheme
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavType
@@ -298,7 +299,8 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                     onManageSpotsClick = {navController.navigate("manage_spots")},
                     onManageEventsClick = {navController.navigate("manage_events")},
                     onManageSignUpsClick = {navController.navigate("manage_signups")},
-                    onNotificationsClick = {navController.navigate("notifications")}
+                    onNotificationsClick = {navController.navigate("notifications")},
+                    onVisitHistoryClick = {navController.navigate("visit_history")}
                 )
             }
             // Auth Area
@@ -395,6 +397,12 @@ fun MainApp(auth: FirebaseAuth, application: Application){
             // Manage Sign ups
             composable("manage_signups"){
                 ManageSignupsScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            // Visit History
+            composable("visit_history"){
+                VisitHistoryScreen(
                     onBack = { navController.popBackStack() }
                 )
             }

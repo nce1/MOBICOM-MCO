@@ -360,5 +360,28 @@ class OfflineFirstEventRepository(
             }
         awaitClose { listener.remove() }
     }
+
+    // Find visit history (checked-in events) for a user
+    fun observeVisitHistory(userId: String): Flow<List<Signups>> = callbackFlow {
+        val listener = firestore.collection("signups")
+            .whereEqualTo("userId", userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e(TAG, "Visit history error: ${error.message}")
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
+                // Filter to only include signups with checkedInAt field
+                val visitHistory = snapshot?.documents?.mapNotNull { doc ->
+                    val signup = doc.toObject(Signups::class.java)
+                    if (signup != null && doc.getTimestamp("checkedInAt") != null) {
+                        signup
+                    } else null
+                }?.sortedByDescending { it.checkedInAt?.toDate()?.time ?: 0L } ?: emptyList()
+
+                trySend(visitHistory)
+            }
+        awaitClose { listener.remove() }
+    }
 }
 
