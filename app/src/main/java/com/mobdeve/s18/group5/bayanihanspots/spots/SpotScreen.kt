@@ -11,9 +11,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarBorder
@@ -31,9 +33,12 @@ import coil.request.ImageRequest
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.mobdeve.s18.group5.bayanihanspots.data.local.BayanihanDatabase
+import com.mobdeve.s18.group5.bayanihanspots.data.local.entity.FavoriteSpotEntity
 import com.mobdeve.s18.group5.bayanihanspots.data.review.Review
 import com.mobdeve.s18.group5.bayanihanspots.data.spots.Spot
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.*
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +47,11 @@ fun SpotScreen(spot: Spot, onBack: () -> Unit){
     val currentUser = auth.currentUser
     val firestore = FirebaseFirestore.getInstance()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // Database for favorites
+    val database = remember { BayanihanDatabase.getInstance(context) }
+    val favoriteSpotDao = database.favoriteSpotDao()
 
     var reviews by remember { mutableStateOf<List<Review>>(emptyList()) }
 
@@ -50,6 +60,10 @@ fun SpotScreen(spot: Spot, onBack: () -> Unit){
     var isSubmitting by remember { mutableStateOf(false) }
 
     var reviewToEdit by remember { mutableStateOf<Review?>(null) }
+
+    // Favorite state
+    val isFavorite by favoriteSpotDao.isFavorite(spot.id, currentUser?.uid ?: "")
+        .collectAsState(initial = 0)
 
     LaunchedEffect(spot.id) {
         firestore.collection("spots").document(spot.id)
@@ -83,7 +97,7 @@ fun SpotScreen(spot: Spot, onBack: () -> Unit){
         )
     }
 
-    Scaffold(containerColor = SurfaceOffWhite) { innerPadding ->
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(bottom = innerPadding.calculateBottomPadding()).verticalScroll(rememberScrollState())){
             Box(modifier = Modifier.fillMaxWidth().height(300.dp)){
                 if (spot.imageList.isNotEmpty()) {
@@ -102,12 +116,12 @@ fun SpotScreen(spot: Spot, onBack: () -> Unit){
                     if (spot.imageList.size > 1){
                         Surface(
                             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-                            color = Color.Black.copy(alpha = 0.6f),
+                            color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f),
                             shape = CircleShape
                         ){
                             Text(
                                 text = "${pagerState.currentPage + 1}/${spot.imageList.size}",
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onPrimary,
                                 style = MaterialTheme.typography.labelSmall,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
@@ -118,21 +132,21 @@ fun SpotScreen(spot: Spot, onBack: () -> Unit){
                         modifier = Modifier.fillMaxSize().background(SecondarySage.copy(alpha = 0.5f)),
                         contentAlignment = Alignment.Center
                     ){
-                        Icon(Icons.Default.Image, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(48.dp))
+                        Icon(Icons.Default.Image, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp))
                     }
                 }
 
                 IconButton(
                     onClick = onBack,
-                    modifier = Modifier.padding(16.dp).background(Color.Black.copy(0.4f), CircleShape).align(Alignment.TopStart)
+                    modifier = Modifier.padding(16.dp).background(MaterialTheme.colorScheme.scrim.copy(0.4f), CircleShape).align(Alignment.TopStart)
                 ){
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onPrimary)
                 }
             }
 
             // Spot Section
             Column(modifier = Modifier.padding(24.dp)){
-                Text(spot.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = TextCharcoal)
+                Text(spot.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)){
@@ -142,18 +156,60 @@ fun SpotScreen(spot: Spot, onBack: () -> Unit){
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)){
-                    DetailBadge(text = "Crowd: ${spot.crowdLevel}", color = Color.Gray.copy(0.2f))
+                    DetailBadge(text = "Crowd: ${spot.crowdLevel}", color = MaterialTheme.colorScheme.surfaceVariant)
                     if (spot.distanceString.isNotBlank()){
-                        DetailBadge(text = spot.distanceString.replace("•", "").trim(), color = Color.Gray.copy(0.2f))
+                        DetailBadge(text = spot.distanceString.replace("•", "").trim(), color = MaterialTheme.colorScheme.surfaceVariant)
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Favorite button
+                if (currentUser != null) {
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                if (isFavorite > 0) {
+                                    favoriteSpotDao.removeFavorite(spot.id, currentUser.uid)
+                                    Toast.makeText(context, "Removed from favorites", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    favoriteSpotDao.addFavorite(
+                                        FavoriteSpotEntity(
+                                            spotId = spot.id,
+                                            userId = currentUser.uid
+                                        )
+                                    )
+                                    Toast.makeText(context, "Added to favorites!", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isFavorite > 0) AccentCoral else MaterialTheme.colorScheme.surface
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            if (isFavorite > 0) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            contentDescription = null,
+                            tint = if (isFavorite > 0) MaterialTheme.colorScheme.onPrimary else AccentCoral,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            if (isFavorite > 0) "Favorited" else "Add to Favorites",
+                            color = if (isFavorite > 0) MaterialTheme.colorScheme.onPrimary else AccentCoral
+                        )
+                    }
+                }
+
+
                 Spacer(modifier = Modifier.height(24.dp))
-                Text("About this spot", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = TextCharcoal)
+                Text("About this spot", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(spot.description, style = MaterialTheme.typography.bodyMedium, color = TextCharcoal.copy(0.8f))
+                Text(spot.description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground.copy(0.8f))
             }
 
-            Divider(color = Color.LightGray.copy(0.5f), thickness = 1.dp)
+            Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
             // Review Section
             Column(modifier = Modifier.padding(24.dp)){
                 Row(
@@ -161,7 +217,7 @@ fun SpotScreen(spot: Spot, onBack: () -> Unit){
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ){
-                    Text("Reviews (${reviews.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextCharcoal)
+                    Text("Reviews (${reviews.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                     if (myReview != null) {
                         Text("You reviewed this spot", style = MaterialTheme.typography.labelSmall, color = PrimaryTeal)
                     }
@@ -169,7 +225,7 @@ fun SpotScreen(spot: Spot, onBack: () -> Unit){
                 Spacer(modifier = Modifier.height(16.dp))
                 if (currentUser != null && myReview == null){
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         elevation = CardDefaults.cardElevation(1.dp),
                         modifier = Modifier.fillMaxWidth()
                     ){
@@ -223,12 +279,12 @@ fun SpotScreen(spot: Spot, onBack: () -> Unit){
                 }
                 else if (currentUser == null){
                     Box(modifier = Modifier.fillMaxWidth().background(SecondarySage.copy(0.2f), RoundedCornerShape(8.dp)).padding(16.dp)) {
-                        Text("Log in to review", style = MaterialTheme.typography.bodySmall, color = TextCharcoal)
+                        Text("Log in to review", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                 }
                 if (reviews.isEmpty()){
-                    Text("No reviews yet. Be the first!", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                    Text("No reviews yet. Be the first!", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                 } else {
                     if (myReview != null) {
                         ReviewItem(
@@ -291,9 +347,9 @@ fun EditReviewDialog(review: Review, onDismiss: () -> Unit, onConfirm: (Int, Str
 // For Review
 @Composable
 fun ReviewItem(review: Review, isOwner: Boolean, onEdit: () -> Unit, onDelete: () -> Unit){
-    Column(modifier = Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(8.dp)).padding(12.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp)).padding(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(review.userName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, color = TextCharcoal)
+            Text(review.userName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.width(8.dp))
             Row {
                 repeat(review.rating) { Icon(Icons.Filled.Star, null, tint = Color(0xFFFFC107), modifier = Modifier.size(14.dp)) }
@@ -301,19 +357,19 @@ fun ReviewItem(review: Review, isOwner: Boolean, onEdit: () -> Unit, onDelete: (
             Spacer(modifier = Modifier.weight(1f))
 
             if (isOwner){
-                Icon(Icons.Default.Edit, "Edit", tint = Color.Gray, modifier = Modifier.size(20.dp).clickable { onEdit() })
+                Icon(Icons.Default.Edit, "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp).clickable { onEdit() })
                 Spacer(modifier = Modifier.width(12.dp))
-                Icon(Icons.Default.Delete, "Delete", tint = Color.Red.copy(0.6f), modifier = Modifier.size(20.dp).clickable { onDelete() })
+                Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error.copy(0.6f), modifier = Modifier.size(20.dp).clickable { onDelete() })
             }
         }
         Spacer(modifier = Modifier.height(4.dp))
-        Text(review.comment, style = MaterialTheme.typography.bodySmall, color = TextCharcoal.copy(0.8f))
+        Text(review.comment, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(0.8f))
     }
 }
 
 @Composable
 fun DetailBadge(text: String, color: Color) {
     Surface(color = color, shape = RoundedCornerShape(6.dp)) {
-        Text(text, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), color = TextCharcoal)
+        Text(text, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), color = MaterialTheme.colorScheme.onSurface)
     }
 }

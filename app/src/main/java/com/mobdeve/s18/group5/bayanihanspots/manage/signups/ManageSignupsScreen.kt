@@ -107,7 +107,7 @@ fun ManageSignupsScreen(viewModel: ManageSignupsViewModel = viewModel(factory = 
 fun SignupItem(signup: Signups, event: Event, isProcessing: Boolean, onCancel: () -> Unit){
     val isConfirmed = signup.status == "CONFIRMED"
 
-    val containerColor = if (isConfirmed) Color.White else Color(0xFFF9F9F9)
+    val containerColor = if (isConfirmed) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant
     val statusBg = if (isConfirmed) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
     val statusColor = if (isConfirmed) Color(0xFF2E7D32) else Color(0xFFC62828)
 

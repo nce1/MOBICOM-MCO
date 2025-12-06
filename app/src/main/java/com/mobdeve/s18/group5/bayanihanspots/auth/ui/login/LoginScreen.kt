@@ -111,7 +111,10 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit, onSignupC
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = {
+                            email = it
+                            viewModel.loginDataChanged(it, password)
+                        },
                         label = { Text("Email") },
                         isError = formState?.usernameTouched == true && formState?.usernameError != null,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -122,7 +125,6 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit, onSignupC
                                     emailHadFocus = true
                                 } else if (emailHadFocus){
                                     viewModel.usernameFocusLost(email)
-                                    viewModel.loginDataChanged(email, password)
                                 }
                             }
                     )
@@ -131,7 +133,10 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit, onSignupC
                     }
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = {
+                            password = it
+                            viewModel.loginDataChanged(email, it)
+                        },
                         label = { Text("Password") },
                         isError = formState?.passwordTouched == true && formState?.passwordError != null,
                         visualTransformation = PasswordVisualTransformation(),
@@ -143,7 +148,6 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit, onSignupC
                                     passwordHadFocus = true
                                 } else if (passwordHadFocus) {
                                     viewModel.passwordFocusLost(password)
-                                    viewModel.loginDataChanged(email, password)
                                 }
                             }
                     )

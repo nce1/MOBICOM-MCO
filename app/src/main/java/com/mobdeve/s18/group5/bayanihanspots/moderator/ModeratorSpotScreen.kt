@@ -45,9 +45,9 @@ fun ModeratorSpotScreen(spotId: String, onBack: () -> Unit){
         return
     }
     Scaffold(
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            BottomAppBar(containerColor = Color.White, tonalElevation = 8.dp) {
+            BottomAppBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 8.dp) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -125,34 +125,34 @@ fun ModeratorSpotScreen(spotId: String, onBack: () -> Unit){
                     if (spot!!.imageList.size > 1) {
                         Surface(
                             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-                            color = Color.Black.copy(alpha = 0.6f),
+                            color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f),
                             shape = CircleShape
                         ) {
                             Text(
                                 text = "${pagerState.currentPage + 1}/${spot!!.imageList.size}",
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onPrimary,
                                 style = MaterialTheme.typography.labelSmall,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     }
                 } else {
-                    Box(modifier = Modifier.fillMaxSize().background(Color.LightGray)) {
+                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant)) {
                         Icon(Icons.Default.Image, null, Modifier.align(Alignment.Center))
                     }
                 }
                 IconButton(
                     onClick = onBack,
-                    modifier = Modifier.padding(16.dp).background(Color.Black.copy(0.4f), CircleShape).align(Alignment.TopStart)
+                    modifier = Modifier.padding(16.dp).background(MaterialTheme.colorScheme.scrim.copy(0.4f), CircleShape).align(Alignment.TopStart)
                 ) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onPrimary)
                 }
             }
             Column(modifier = Modifier.padding(24.dp)) {
-                Text(spot!!.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Text(spot!!.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text("Submitted by: ${spot!!.userID}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Text("Submitted by: ${spot!!.userID}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(16.dp))
 
                 ModeratorField("Type", spot!!.type)

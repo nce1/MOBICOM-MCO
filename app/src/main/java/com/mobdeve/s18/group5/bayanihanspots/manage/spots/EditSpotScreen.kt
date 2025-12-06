@@ -2,6 +2,7 @@ package com.mobdeve.s18.group5.bayanihanspots.manage.spots
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -48,8 +49,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.storage.FirebaseStorage
 import com.google.maps.android.compose.*
+import com.mobdeve.s18.group5.bayanihanspots.BitmapUtils
 import com.mobdeve.s18.group5.bayanihanspots.data.spots.Spot
-import com.mobdeve.s18.group5.bayanihanspots.data.spots.toSpot
+import java.io.InputStream
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -243,7 +245,7 @@ fun EditSpotScreen(spot: Spot, onBack: () -> Unit, onSaveSuccess: () -> Unit){
                 onClick = {
                     if (name.isBlank() || description.isBlank()) return@Button
                     isSaving = true
-                    uploadImagesToFirebase(storage, newImages) { uploadedUrls ->
+                    uploadImagesToFirebase(context, storage, newImages) { uploadedUrls ->
                         val finalImageList = existingImages + uploadedUrls
                         val updates = hashMapOf<String, Any>(
                             "name" to name,

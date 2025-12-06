@@ -101,6 +101,56 @@ class EventsViewModel(
         }
     }
 
+    fun leaveEvent(event: Event) {
+        val user = FirebaseAuth.getInstance().currentUser
+
+        if (user != null) {
+            viewModelScope.launch {
+                val signupId = "${event.id}_${user.uid}"
+                val result = repository.leaveEvent(signupId, event.id)
+                if (result.isSuccess) {
+                    // Cancel scheduled reminders for this event
+                    EventReminderManager.cancelEventReminders(application, event.id)
+                    Log.d("EventsViewModel", "Successfully left event and cancelled reminders")
+                } else {
+                    Log.e("EventsViewModel", "Leave failed: ${result.exceptionOrNull()?.message}")
+                }
+            }
+        }
+    }
+
+    /**
+     * Record a check-in for an event
+     */
+    fun checkInEvent(event: Event, distanceMeters: Float) {
+        val user = FirebaseAuth.getInstance().currentUser
+
+        if (user != null) {
+            viewModelScope.launch {
+                try {
+                    val signupId = "${event.id}_${user.uid}"
+                    val checkInData = hashMapOf(
+                        "checkedInAt" to com.google.firebase.Timestamp.now(),
+                        "distanceMeters" to distanceMeters.toDouble()
+                    )
+
+                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                        .collection("signups")
+                        .document(signupId)
+                        .update(checkInData as Map<String, Any>)
+                        .addOnSuccessListener {
+                            Log.d("EventsViewModel", "Check-in recorded for event: ${event.title}")
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("EventsViewModel", "Failed to record check-in: ${e.message}")
+                        }
+                } catch (e: Exception) {
+                    Log.e("EventsViewModel", "Check-in error: ${e.message}")
+                }
+            }
+        }
+    }
+
     /**
      * Schedule notification reminders for an event
      */

@@ -25,7 +25,7 @@ fun SpotDetailsDialog(spot: Spot, onDismiss: () -> Unit, onExpand: () -> Unit){
         Card(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             shape = MaterialTheme.shapes.large,
-            colors = CardDefaults.cardColors(containerColor = SurfaceOffWhite),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
         ) {
             Column(
@@ -49,14 +49,14 @@ fun SpotDetailsDialog(spot: Spot, onDismiss: () -> Unit, onExpand: () -> Unit){
                             Icon(
                                 imageVector = Icons.Default.Image,
                                 contentDescription = null,
-                                tint = TextCharcoal.copy(alpha = 0.4f),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(48.dp)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 "No Image",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextCharcoal.copy(alpha = 0.5f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -68,7 +68,7 @@ fun SpotDetailsDialog(spot: Spot, onDismiss: () -> Unit, onExpand: () -> Unit){
                     Text(
                         text = spot.name,
                         style = MaterialTheme.typography.headlineSmall,
-                        color = TextCharcoal,
+                        color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -80,7 +80,7 @@ fun SpotDetailsDialog(spot: Spot, onDismiss: () -> Unit, onExpand: () -> Unit){
                     Text(
                         text = spot.description,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextCharcoal,
+                        color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Start,
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis
@@ -93,7 +93,7 @@ fun SpotDetailsDialog(spot: Spot, onDismiss: () -> Unit, onExpand: () -> Unit){
                         OutlinedButton(
                             onClick = onDismiss,
                             modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextCharcoal)
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
                         ) {
                             Text("Close")
                         }
@@ -115,7 +115,7 @@ fun DialogBadge(text: String){
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
-            color = TextCharcoal,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
         )
     }

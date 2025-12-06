@@ -115,7 +115,7 @@ fun AddEventScreen(
                 windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
-        containerColor = SurfaceOffWhite
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -242,7 +242,7 @@ fun AddEventScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showDatePicker = true },
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(

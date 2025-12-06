@@ -123,7 +123,10 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                         Column(modifier = Modifier.weight(1f)) {
                             OutlinedTextField(
                                 value = firstname,
-                                onValueChange = { firstname = it },
+                                onValueChange = {
+                                    firstname = it
+                                    viewModel.signUpDataChanged(email, it, lastname, username, password, confirmPassword)
+                                },
                                 label = { Text("First Name") },
                                 modifier = Modifier
                                 .fillMaxWidth()
@@ -132,7 +135,6 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                                         firstnameHadFocus = true
                                     } else if (firstnameHadFocus) {
                                         viewModel.firstnameFocusLost(firstname)
-                                        viewModel.signUpDataChanged(email, firstname, lastname, username, password, confirmPassword)
                                     }
                                 }
                             )
@@ -143,7 +145,10 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                         Column(modifier = Modifier.weight(1f)) {
                             OutlinedTextField(
                                 value = lastname,
-                                onValueChange = { lastname = it },
+                                onValueChange = {
+                                    lastname = it
+                                    viewModel.signUpDataChanged(email, firstname, it, username, password, confirmPassword)
+                                },
                                 label = { Text("Last Name") },
                                 modifier = Modifier
                                 .fillMaxWidth()
@@ -152,7 +157,6 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                                         lastnameHadFocus = true
                                     } else if (lastnameHadFocus) {
                                         viewModel.lastnameFocusLost(lastname)
-                                        viewModel.signUpDataChanged(email, firstname, lastname, username, password, confirmPassword)
                                     }
                                 }
                             )
@@ -164,7 +168,10 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = {
+                            email = it
+                            viewModel.signUpDataChanged(it, firstname, lastname, username, password, confirmPassword)
+                        },
                         label = { Text("Email") },
                         isError = formState?.emailTouched == true && formState?.emailError != null,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -175,7 +182,6 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                                     emailHadFocus = true
                                 } else if (emailHadFocus) {
                                     viewModel.emailFocusLost(email)
-                                    viewModel.signUpDataChanged(email, firstname, lastname, username, password, confirmPassword)
                                 }
                             }
                     )
@@ -185,7 +191,10 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = username,
-                        onValueChange = { username = it },
+                        onValueChange = {
+                            username = it
+                            viewModel.signUpDataChanged(email, firstname, lastname, it, password, confirmPassword)
+                        },
                         label = { Text("Username") },
                         isError = formState?.usernameTouched == true && formState?.usernameError != null,
                         modifier = Modifier
@@ -195,7 +204,6 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                                     usernameHadFocus = true
                                 } else if (usernameHadFocus) {
                                     viewModel.usernameFocusLost(username)
-                                    viewModel.signUpDataChanged(email, firstname, lastname, username, password, confirmPassword)
                                 }
                             }
                     )
@@ -205,7 +213,10 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = {
+                            password = it
+                            viewModel.signUpDataChanged(email, firstname, lastname, username, it, confirmPassword)
+                        },
                         label = { Text("Password") },
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -217,7 +228,6 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                                     passwordHadFocus = true
                                 } else if (passwordHadFocus) {
                                     viewModel.passwordFocusLost(password)
-                                    viewModel.signUpDataChanged(email, firstname, lastname, username, password, confirmPassword)
                                 }
                             }
                     )
@@ -227,7 +237,10 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = confirmPassword,
-                        onValueChange = { confirmPassword = it },
+                        onValueChange = {
+                            confirmPassword = it
+                            viewModel.signUpDataChanged(email, firstname, lastname, username, password, it)
+                        },
                         label = { Text("Confirm Password") },
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -239,7 +252,6 @@ fun SignupScreen(viewModel: SignupViewModel, onLoginClick: () -> Unit, onSignUpS
                                     confirmPasswordHadFocus = true
                                 } else if (confirmPasswordHadFocus) {
                                     viewModel.cPasswordFocusLost(password, confirmPassword)
-                                    viewModel.signUpDataChanged(email, firstname, lastname, username, password, confirmPassword)
                                 }
                             }
                     )

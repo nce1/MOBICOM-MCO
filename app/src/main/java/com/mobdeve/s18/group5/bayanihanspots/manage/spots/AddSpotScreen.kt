@@ -2,6 +2,7 @@ package com.mobdeve.s18.group5.bayanihanspots.manage.spots
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.location.Geocoder
 import android.net.Uri
 import android.os.Build
@@ -55,8 +56,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.storage.FirebaseStorage
 import com.google.maps.android.compose.*
+import com.mobdeve.s18.group5.bayanihanspots.BitmapUtils
 import com.mobdeve.s18.group5.bayanihanspots.data.spots.Spot
 import java.io.File
+import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -269,7 +272,7 @@ fun AddSpotScreen(
                             return@Button
                         }
                         isUploading = true
-                        uploadImagesToFirebase(storage, selectedImages) { imageUrls ->
+                        uploadImagesToFirebase(context, storage, selectedImages) { imageUrls ->
                             val spotData = hashMapOf(
                                 "name" to name,
                                 "type" to type,
@@ -493,13 +496,17 @@ fun CustomDropdown(label: String, options: List<String>, selectedOption: String,
     }
 }
 
-fun uploadImagesToFirebase(storage: FirebaseStorage, uris: List<Uri>, onComplete: (List<String>) -> Unit){
+fun uploadImagesToFirebase(context: android.content.Context, storage: FirebaseStorage, uris: List<Uri>, onComplete: (List<String>) -> Unit){
     if (uris.isEmpty()) { onComplete(emptyList()); return }
     val uploadedUrls = mutableListOf<String>()
     var count = 0
     uris.forEach { uri ->
         val ref = storage.reference.child("spot_images/${UUID.randomUUID()}.jpg")
-        ref.putFile(uri).continueWithTask { it.result?.storage?.downloadUrl }
+        val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+        val bitmap = BitmapFactory.decodeStream(inputStream)
+        val compressedBitmap = BitmapUtils.compressBitmap(bitmap, 500)
+
+        ref.putBytes(compressedBitmap).continueWithTask { it.result?.storage?.downloadUrl }
             .addOnSuccessListener { uploadedUrls.add(it.toString()); count++; if (count == uris.size) onComplete(uploadedUrls) }
             .addOnFailureListener { count++; if (count == uris.size) onComplete(uploadedUrls) }
     }
@@ -569,4 +576,3 @@ fun searchAddress(context: android.content.Context, query: String, onResult: (La
         handler.post { onResult(null) }
     }
 }
-

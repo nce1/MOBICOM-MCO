@@ -13,11 +13,18 @@ private val DarkColorScheme = darkColorScheme(
     tertiary = AccentCoral,
     background = Color(0xFF121212),
     surface = Color(0xFF1E1E1E),
+    surfaceVariant = Color(0xFF2A2A2A),
     onPrimary = Color.White,
     onSecondary = Color.Black,
     onTertiary = Color.White,
-    onBackground = Color.White,
-    onSurface = Color.White
+    onBackground = Color(0xFFE0E0E0),
+    onSurface = Color(0xFFE0E0E0),
+    onSurfaceVariant = Color(0xFFB0B0B0),
+    outline = Color(0xFF404040),
+    outlineVariant = Color(0xFF353535),
+    scrim = Color(0xFF000000),
+    error = AccentCoral,
+    onError = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -25,12 +32,19 @@ private val LightColorScheme = lightColorScheme(
     secondary = SecondarySage,
     tertiary = AccentCoral,
     background = SurfaceOffWhite,
-    surface = SurfaceOffWhite,
+    surface = Color.White,
+    surfaceVariant = SurfaceOffWhite,
     onPrimary = Color.White,
     onSecondary = TextCharcoal,
     onTertiary = Color.White,
     onBackground = TextCharcoal,
-    onSurface = TextCharcoal
+    onSurface = TextCharcoal,
+    onSurfaceVariant = Color(0xFF5F5F5F),
+    outline = Color(0xFFE0E0E0),
+    outlineVariant = Color(0xFFF0F0F0),
+    scrim = Color(0xFF000000),
+    error = AccentCoral,
+    onError = Color.White
 )
 
 @Composable

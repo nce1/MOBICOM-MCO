@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material3.*
@@ -22,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -32,8 +32,6 @@ import com.mobdeve.s18.group5.bayanihanspots.ui.theme.AccentCoral
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.PinNatureGreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.PrimaryTeal
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.SecondarySage
-import com.mobdeve.s18.group5.bayanihanspots.ui.theme.SurfaceOffWhite
-import com.mobdeve.s18.group5.bayanihanspots.ui.theme.TextCharcoal
 
 @Composable
 fun EventsScreen(
@@ -41,7 +39,9 @@ fun EventsScreen(
     onRefresh: () -> Unit,
     isLoggedIn: Boolean,
     onLoginClick: () -> Unit,
-    onJoinEvent: (String) -> Unit
+    onJoinEvent: (String) -> Unit,
+    onLeaveEvent: (String) -> Unit,
+    onCheckIn: (Event) -> Unit
 ) {
     when (state) {
         EventsUiState.Loading -> EventsLoading()
@@ -51,7 +51,9 @@ fun EventsScreen(
             joinedEventIds = state.joinedEventIds,
             isLoggedIn = isLoggedIn,
             onLoginClick = onLoginClick,
-            onJoinEvent = onJoinEvent
+            onJoinEvent = onJoinEvent,
+            onLeaveEvent = onLeaveEvent,
+            onCheckIn = onCheckIn
         )
     }
 }
@@ -61,7 +63,7 @@ private fun EventsLoading() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(SurfaceOffWhite)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -71,7 +73,7 @@ private fun EventsLoading() {
             Text(
                 "Loading events...",
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextCharcoal.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
             )
         }
     }
@@ -82,7 +84,7 @@ private fun EventsError(message: String, onRetry: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(SurfaceOffWhite)
+            .background(MaterialTheme.colorScheme.background)
             .padding(32.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -106,13 +108,13 @@ private fun EventsError(message: String, onRetry: () -> Unit) {
             text = "Oops! Something went wrong",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = TextCharcoal
+            color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
-            color = TextCharcoal.copy(alpha = 0.6f)
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
         )
         Spacer(modifier = Modifier.height(24.dp))
         Button(
@@ -131,12 +133,14 @@ private fun EventsList(
     joinedEventIds: Set<String>,
     isLoggedIn: Boolean,
     onLoginClick: () -> Unit,
-    onJoinEvent: (String) -> Unit
+    onJoinEvent: (String) -> Unit,
+    onLeaveEvent: (String) -> Unit,
+    onCheckIn: (Event) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(SurfaceOffWhite),
+            .background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -167,12 +171,12 @@ private fun EventsList(
                             "Programs & Events",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
-                            color = TextCharcoal
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                         Text(
                             "${events.size} upcoming opportunities",
                             style = MaterialTheme.typography.bodySmall,
-                            color = TextCharcoal.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                         )
                     }
                 }
@@ -180,7 +184,7 @@ private fun EventsList(
                 Text(
                     "Volunteer with nearby barangays, gardens, and community programs.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextCharcoal.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 HorizontalDivider(color = SecondarySage, thickness = 1.dp)
@@ -205,6 +209,12 @@ private fun EventsList(
                 isLoggedIn = isLoggedIn,
                 onJoinClick = {
                     if (isLoggedIn) onJoinEvent(event.id) else onLoginClick()
+                },
+                onLeaveClick = {
+                    onLeaveEvent(event.id)
+                },
+                onCheckIn = {
+                    onCheckIn(event)
                 }
             )
         }
@@ -224,7 +234,9 @@ private fun EventCard(
     isJoined: Boolean,
     isFull: Boolean,
     isLoggedIn: Boolean,
-    onJoinClick: () -> Unit
+    onJoinClick: () -> Unit,
+    onLeaveClick: () -> Unit,
+    onCheckIn: () -> Unit
 ) {
     val buttonText = when {
         isJoined -> "Joined"
@@ -233,10 +245,11 @@ private fun EventCard(
         else -> "Join Event"
     }
     val isButtonEnabled = !isJoined && !isFull
+    val hasLocation = event.coordinates != null
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -265,7 +278,7 @@ private fun EventCard(
                     Text(
                         event.title,
                         style = MaterialTheme.typography.titleMedium,
-                        color = TextCharcoal,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
@@ -320,7 +333,7 @@ private fun EventCard(
             Text(
                 event.description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextCharcoal.copy(alpha = 0.7f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
@@ -343,7 +356,7 @@ private fun EventCard(
                     Text(
                         "$currentVolunteers / $maxVolunteers volunteers",
                         style = MaterialTheme.typography.labelMedium,
-                        color = if (isFull) AccentCoral else TextCharcoal.copy(alpha = 0.7f),
+                        color = if (isFull) AccentCoral else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -365,45 +378,114 @@ private fun EventCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Action Button
-            Button(
-                onClick = onJoinClick,
-                enabled = isButtonEnabled,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = when {
-                        isJoined -> PinNatureGreen
-                        isFull -> TextCharcoal.copy(alpha = 0.3f)
-                        else -> PrimaryTeal
-                    },
-                    disabledContainerColor = when {
-                        isJoined -> PinNatureGreen.copy(alpha = 0.7f)
-                        else -> TextCharcoal.copy(alpha = 0.2f)
-                    },
-                    disabledContentColor = Color.White
-                ),
-                contentPadding = PaddingValues(vertical = 14.dp)
-            ) {
-                if (!isLoggedIn && !isJoined && !isFull) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.Login,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                } else if (!isJoined && !isFull) {
-                    Icon(
-                        Icons.Default.PersonAdd,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+            // Action Buttons
+            if (isJoined) {
+                // Show Check-in button and Cancel button for joined events
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Check-in button (only if event has location)
+                    if (hasLocation) {
+                        Button(
+                            onClick = onCheckIn,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = PrimaryTeal
+                            ),
+                            contentPadding = PaddingValues(vertical = 14.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.MyLocation,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Check-in at Event", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+
+                    // Joined status and Cancel row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Joined indicator
+                        Button(
+                            onClick = { },
+                            enabled = false,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                disabledContainerColor = PinNatureGreen.copy(alpha = 0.7f),
+                                disabledContentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            contentPadding = PaddingValues(vertical = 14.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Joined", fontWeight = FontWeight.SemiBold)
+                        }
+
+                        // Cancel button
+                        OutlinedButton(
+                            onClick = onLeaveClick,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = AccentCoral
+                            ),
+                            border = ButtonDefaults.outlinedButtonBorder.copy(
+                                brush = androidx.compose.ui.graphics.SolidColor(AccentCoral)
+                            ),
+                            contentPadding = PaddingValues(vertical = 14.dp)
+                        ) {
+                            Text("Cancel", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
                 }
-                Text(
-                    buttonText,
-                    fontWeight = FontWeight.SemiBold
-                )
+            } else {
+                // Regular join button
+                Button(
+                    onClick = onJoinClick,
+                    enabled = isButtonEnabled,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = when {
+                            isFull -> MaterialTheme.colorScheme.surfaceVariant
+                            else -> PrimaryTeal
+                        },
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    contentPadding = PaddingValues(vertical = 14.dp)
+                ) {
+                    if (!isLoggedIn && !isFull) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Login,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    } else if (!isFull) {
+                        Icon(
+                            Icons.Default.PersonAdd,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Text(
+                        buttonText,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
     }
@@ -434,7 +516,7 @@ private fun InfoPill(
             Text(
                 text,
                 style = MaterialTheme.typography.labelSmall,
-                color = TextCharcoal,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

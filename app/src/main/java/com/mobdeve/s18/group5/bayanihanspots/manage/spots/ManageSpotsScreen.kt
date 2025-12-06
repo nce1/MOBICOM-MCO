@@ -140,7 +140,7 @@ fun ManageSpotsScreen(spots: List<Spot>, isLoading: Boolean, onBack: () -> Unit,
 
 @Composable
 fun MySpotItem(spot: Spot, onEdit: () -> Unit, onDelete: () -> Unit){
-    Card(elevation = CardDefaults.cardElevation(2.dp), colors = CardDefaults.cardColors(containerColor = Color.White)){
+    Card(elevation = CardDefaults.cardElevation(2.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)){
         Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically){
             val image = spot.imageList.firstOrNull()
             if (image != null) {

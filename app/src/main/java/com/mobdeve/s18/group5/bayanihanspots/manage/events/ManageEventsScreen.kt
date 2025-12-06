@@ -148,7 +148,7 @@ fun ManageEventsScreen(
 fun MyEventItem(event: Event, onEdit: () -> Unit, onDelete: () -> Unit) {
     Card(
         elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier

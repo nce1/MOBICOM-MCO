@@ -29,8 +29,6 @@ import com.google.firebase.firestore.Query
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.AccentCoral
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.PrimaryTeal
 import com.mobdeve.s18.group5.bayanihanspots.ui.theme.SecondarySage
-import com.mobdeve.s18.group5.bayanihanspots.ui.theme.SurfaceOffWhite
-import com.mobdeve.s18.group5.bayanihanspots.ui.theme.TextCharcoal
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -88,7 +86,7 @@ fun NotificationScreen(
                     Text(
                         "Notifications",
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 },
                 navigationIcon = {
@@ -96,7 +94,7 @@ fun NotificationScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color.White
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 },
@@ -106,7 +104,7 @@ fun NotificationScreen(
                 windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
-        containerColor = SurfaceOffWhite
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -138,14 +136,14 @@ fun NotificationScreen(
                 Text(
                     "No notifications yet",
                     style = MaterialTheme.typography.titleMedium,
-                    color = TextCharcoal,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     "You'll see updates about your activities here",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextCharcoal.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
             }
         } else {
@@ -225,8 +223,8 @@ fun SwipeableNotificationItem(
                 contentAlignment = if (isSwipingRight) Alignment.CenterStart else Alignment.CenterEnd
             ) {
                 when {
-                    isSwipingRight -> Icon(Icons.Default.MarkEmailRead, "Mark as Read", tint = Color.White)
-                    isSwipingLeft -> Icon(Icons.Default.Delete, "Delete", tint = Color.White)
+                    isSwipingRight -> Icon(Icons.Default.MarkEmailRead, "Mark as Read", tint = MaterialTheme.colorScheme.onPrimary)
+                    isSwipingLeft -> Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.onError)
                 }
             }
         },
@@ -239,10 +237,10 @@ fun SwipeableNotificationItem(
 @Composable
 fun NotificationItem(notification: UserNotification) {
     val dateFormatter = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault())
-    val containerColor = if (notification.isRead) SurfaceOffWhite else Color.White
+    val containerColor = if (notification.isRead) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
     val titleWeight = if (notification.isRead) FontWeight.Normal else FontWeight.SemiBold
-    val titleColor = if (notification.isRead) TextCharcoal.copy(alpha = 0.6f) else PrimaryTeal
-    val iconTint = if (notification.isRead) TextCharcoal.copy(alpha = 0.4f) else PrimaryTeal
+    val titleColor = if (notification.isRead) MaterialTheme.colorScheme.onSurfaceVariant else PrimaryTeal
+    val iconTint = if (notification.isRead) MaterialTheme.colorScheme.onSurfaceVariant else PrimaryTeal
     val iconBgColor = if (notification.isRead) SecondarySage.copy(alpha = 0.3f) else SecondarySage
 
     Card(
@@ -289,14 +287,14 @@ fun NotificationItem(notification: UserNotification) {
                     Text(
                         text = dateFormatter.format(notification.timestamp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextCharcoal.copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = notification.message,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (notification.isRead) TextCharcoal.copy(alpha = 0.5f) else TextCharcoal.copy(alpha = 0.8f)
+                    color = if (notification.isRead) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                 )
 
                 // Swipe hint for unread
@@ -305,7 +303,7 @@ fun NotificationItem(notification: UserNotification) {
                     Text(
                         text = "← Swipe to mark read • Swipe to delete →",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextCharcoal.copy(alpha = 0.3f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     )
                 }
             }

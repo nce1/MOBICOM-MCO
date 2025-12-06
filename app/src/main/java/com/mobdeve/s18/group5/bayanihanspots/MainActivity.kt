@@ -1,10 +1,15 @@
 package com.mobdeve.s18.group5.bayanihanspots
 
+import android.Manifest
 import android.app.Application
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -13,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobdeve.s18.group5.bayanihanspots.spots.SpotScreen
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -56,6 +62,7 @@ import com.mobdeve.s18.group5.bayanihanspots.manage.spots.ManageSpotsViewModel
 import com.mobdeve.s18.group5.bayanihanspots.moderator.ModeratorApp
 import com.mobdeve.s18.group5.bayanihanspots.notifications.EventReminderManager
 import com.mobdeve.s18.group5.bayanihanspots.ui.dashboard.EventsUiState
+import com.mobdeve.s18.group5.bayanihanspots.ui.favorites.FavoritesScreen
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModel
 import com.mobdeve.s18.group5.bayanihanspots.ui.home.HomeViewModelFactory
 import com.mobdeve.s18.group5.bayanihanspots.ui.notifications.NotificationScreen
@@ -162,6 +169,70 @@ fun MainApp(auth: FirebaseAuth, application: Application){
             composable("events") {
                 val viewModel: EventsViewModel = viewModel(factory = EventsViewModelFactory(application))
                 val state by viewModel.uiState.collectAsState()
+                val context = LocalContext.current
+                val fusedLocationClient = remember { com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context) }
+
+                // Track event for check-in permission callback
+                var pendingCheckInEvent by remember { mutableStateOf<Event?>(null) }
+
+                // Function to perform the actual check-in
+                fun performCheckIn(event: Event) {
+                    event.coordinates?.let { eventCoords ->
+                        try {
+                            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                if (location != null) {
+                                    // Calculate distance between user and event
+                                    val results = FloatArray(1)
+                                    android.location.Location.distanceBetween(
+                                        location.latitude, location.longitude,
+                                        eventCoords.latitude, eventCoords.longitude,
+                                        results
+                                    )
+                                    val distanceInMeters = results[0]
+
+                                    if (distanceInMeters <= 100f) {
+                                        // User is within 100 meters - successful check-in!
+                                        viewModel.checkInEvent(event, distanceInMeters)
+                                        Toast.makeText(
+                                            context,
+                                            "✓ Checked in to '${event.title}'! You're ${distanceInMeters.toInt()}m away.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    } else {
+                                        // User is too far
+                                        Toast.makeText(
+                                            context,
+                                            "You're ${distanceInMeters.toInt()}m away. Get within 100m of the event to check in.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Unable to get your location. Please try again.", Toast.LENGTH_SHORT).show()
+                                }
+                            }.addOnFailureListener {
+                                Toast.makeText(context, "Failed to get location: ${it.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (e: SecurityException) {
+                            Toast.makeText(context, "Location permission required", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+
+                val locationPermissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestMultiplePermissions()
+                ) { permissions ->
+                    val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+
+                    if (fineLocationGranted) {
+                        pendingCheckInEvent?.let { event ->
+                            performCheckIn(event)
+                        }
+                    } else {
+                        Toast.makeText(context, "Location permission required for check-in", Toast.LENGTH_SHORT).show()
+                    }
+                    pendingCheckInEvent = null
+                }
+
                 EventsScreen(
                     state = state,
                     onRefresh = { viewModel.refresh() },
@@ -172,7 +243,46 @@ fun MainApp(auth: FirebaseAuth, application: Application){
                         if (event != null){
                             viewModel.joinEvent(event)
                         }
+                    },
+                    onLeaveEvent = { eventId ->
+                        val event = (state as? EventsUiState.Success)?.events?.find { it.id == eventId }
+                        if (event != null) {
+                            viewModel.leaveEvent(event)
+                        }
+                    },
+                    onCheckIn = { event ->
+                        if (event.coordinates != null) {
+                            // Check if we have location permission
+                            val hasFineLocation = ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                            ) == PackageManager.PERMISSION_GRANTED
+
+                            if (hasFineLocation) {
+                                // Already have permission, check location immediately
+                                performCheckIn(event)
+                            } else {
+                                // Request permission
+                                pendingCheckInEvent = event
+                                locationPermissionLauncher.launch(
+                                    arrayOf(
+                                        Manifest.permission.ACCESS_FINE_LOCATION,
+                                        Manifest.permission.ACCESS_COARSE_LOCATION
+                                    )
+                                )
+                            }
+                        } else {
+                            Toast.makeText(context, "This event doesn't have a location set", Toast.LENGTH_SHORT).show()
+                        }
                     }
+                )
+            }
+            composable("favorites") {
+                FavoritesScreen(
+                    onSpotClick = { spot ->
+                        navController.navigate("details/${spot.id}")
+                    },
+                    onLoginClick = { navController.navigate("login") }
                 )
             }
             composable("profile"){
@@ -371,6 +481,17 @@ fun BottomNavBar(navController: NavHostController, isLoggedIn: Boolean) {
                 )
             },
             label = { Text("Events") }
+        )
+        NavigationBarItem(
+            selected = currentRoute(navController) == "favorites",
+            onClick = { navController.navigate("favorites") },
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_favorite_24dp),
+                    contentDescription = "Favorites"
+                )
+            },
+            label = { Text("Favorites") }
         )
         NavigationBarItem(
             selected = currentRoute(navController) == "notifications",

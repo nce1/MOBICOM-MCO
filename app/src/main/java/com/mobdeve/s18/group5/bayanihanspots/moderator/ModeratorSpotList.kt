@@ -215,7 +215,7 @@ fun SpotRequestCard(
             containerColor = when {
                 spot.approvalStatus == "REJECTED" -> Color(0xFFFFEBEE)
                 spot.approvalStatus == "APPROVED" -> Color(0xFFE8F5E9)
-                isNewSubmission -> Color.White
+                isNewSubmission -> MaterialTheme.colorScheme.surface
                 else -> Color(0xFFFFF8E1)
             }
         ),
