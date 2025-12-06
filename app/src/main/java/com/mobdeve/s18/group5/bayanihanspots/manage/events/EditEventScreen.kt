@@ -30,6 +30,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -50,7 +51,8 @@ import java.util.*
 fun EditEventScreen(
     event: Event,
     onBack: () -> Unit,
-    onSaveSuccess: () -> Unit
+    onSaveSuccess: () -> Unit,
+    viewModel: ManageEventsViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
@@ -92,6 +94,9 @@ fun EditEventScreen(
         is24Hour = false
     )
 
+    // Cancel Event
+    var showCancelDialog by remember { mutableStateOf(false) }
+    var isCanceling by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -355,11 +360,73 @@ fun EditEventScreen(
                     Text("Save Changes", fontWeight = FontWeight.Bold)
                 }
             }
-
             Spacer(modifier = Modifier.height(32.dp))
+            OutlinedButton(
+                onClick = { showCancelDialog = true },
+                enabled = !isSaving && !isCanceling,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                ),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (isCanceling) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.error)
+                } else {
+                    Icon(Icons.Default.Close, contentDescription = null) // Or Delete icon
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Cancel Event", fontWeight = FontWeight.Bold)
+                }
+            }
         }
     }
 
+
+    // Cancel event dialogue
+    if (showCancelDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!isCanceling) showCancelDialog = false },
+            title = { Text("Cancel this Event?") },
+            text = {
+                Text("This action cannot be undone. All registered volunteers will be notified and the event will be removed.")
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !isCanceling,
+                    onClick = {
+                        viewModel.cancelEvent(
+                            event = event,
+                            onSuccess = {
+                                showCancelDialog = false
+                                Toast.makeText(context, "Event cancelled and volunteers notified.", Toast.LENGTH_LONG).show()
+                                onBack()
+                            },
+                            onFailure = { errorMessage ->
+                                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+                ) {
+                    if (isCanceling) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp))
+                    } else {
+                        Text("Yes, Cancel Event", color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showCancelDialog = false },
+                    enabled = !isCanceling
+                ) {
+                    Text("No, Keep Event")
+                }
+            }
+        )
+    }
     // Date Picker Dialog
     if (showDatePicker) {
         DatePickerDialog(
